@@ -1,19 +1,13 @@
-import { createClient } from '@/utils/supabase/server'
-import { cookies } from 'next/headers'
-import { getTodos } from '@/services/todoService' // <-- Panggil dari services
+import TodoList from "@/components/TodoList";
 
-export default async function Page() {
-  const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
-
-  // Memanggil service
-  const todos = await getTodos(supabase)
-
+export default function HomePage() {
   return (
-    <ul>
-      {todos?.map((todo: any) => (
-        <li key={todo.id}>{todo.name}</li>
-      ))}
-    </ul>
-  )
+    <main className="p-6">
+      <h1 className="mb-4 text-2xl font-bold">
+        Todo List
+      </h1>
+
+      <TodoList />
+    </main>
+  );
 }
