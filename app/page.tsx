@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 // Simulasi pengecekan NIK dari mock data
 const simulasiCekNIK = (nik: string) => {
@@ -59,9 +60,12 @@ export default function LandingPageDesa() {
         </div>
 
         <div>
-          <button className="px-5 py-2 bg-blue-950 text-white text-xs font-bold rounded-full hover:bg-blue-900 transition shadow-sm">
+          <Link
+            href="/login"
+            className="bg-[#0f172a] text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-slate-800 transition"
+          >
             Masuk Staff Portal
-          </button>
+          </Link>
         </div>
       </nav>
 
