@@ -11,14 +11,14 @@ import CardSanggahan, {
 import FormMutasiLengkap from "@/components/rt/FormMutasiLengkap";
 import FormSurveiKelayakan from "@/components/rt/FormSurveiKelayakan";
 
-// Mock Data Warga RT
+// Mock Data Master Kependudukan Warga RT (Skema tweb_penduduk)
 const mockWargaRT: PendudukRT[] = [
   {
     id: "uuid-001",
     nik: "3507011234560001",
     nama: "Budi Santoso",
     jenisKelamin: "L",
-    tempatLahir: "Malang",
+    tempatLahir: "Kab. Malang",
     tanggalLahir: "1985-05-12",
     statusPenduduk: "Tetap",
     statusVerifikasiDukcapil: "Terverifikasi",
@@ -28,7 +28,7 @@ const mockWargaRT: PendudukRT[] = [
     nik: "3507019876540002",
     nama: "Siti Aminah",
     jenisKelamin: "P",
-    tempatLahir: "Surabaya",
+    tempatLahir: "Kota Surabaya",
     tanggalLahir: "1958-08-24",
     statusPenduduk: "Tetap",
     statusVerifikasiDukcapil: "Terverifikasi",
@@ -38,13 +38,14 @@ const mockWargaRT: PendudukRT[] = [
     nik: "3507015554440003",
     nama: "Joko Widodo (Alm)",
     jenisKelamin: "L",
-    tempatLahir: "Blitar",
+    tempatLahir: "Kab. Blitar",
     tanggalLahir: "1945-01-15",
     statusPenduduk: "Meninggal",
     statusVerifikasiDukcapil: "Anomali / Unverified",
   },
 ];
 
+// Mock Sanggahan 1: Ketidakcocokan Data Kependudukan
 const initialSanggahanPenduduk: SanggahanDataPenduduk[] = [
   {
     id: "sp-1",
@@ -58,6 +59,7 @@ const initialSanggahanPenduduk: SanggahanDataPenduduk[] = [
   },
 ];
 
+// Mock Sanggahan 2: Ketidakcocokan Kondisi Rumah (Prodeskel DDK)
 const initialSanggahanRumah: SanggahanKondisiRumah[] = [
   {
     id: "sr-1",
@@ -82,6 +84,7 @@ export default function DashboardRT() {
   const [selectedNik, setSelectedNik] = useState("");
   const [notif, setNotif] = useState("");
 
+  // State List Sanggahan Berjenjang (RT -> Sekdes)
   const [sanggahanPendudukList, setSanggahanPendudukList] = useState<
     SanggahanDataPenduduk[]
   >(initialSanggahanPenduduk);
@@ -97,53 +100,33 @@ export default function DashboardRT() {
     setSelectedNik("");
   };
 
-  const handleVerifikasiPenduduk = (item: SanggahanDataPenduduk) => {
-    setSelectedNik(item.nikPelapor);
-    setActiveMode("kependudukan");
-    setNotif(
-      `Memproses sanggahan data kependudukan atas nama ${item.namaPelapor}.`,
-    );
-  };
-
-  const handleVerifikasiRumah = (item: SanggahanKondisiRumah) => {
-    setSelectedNik(item.nikPelapor);
-    setActiveMode("kelayakan");
-    setNotif(
-      `Melakukan survei ulang kelayakan bansos atas nama ${item.namaPelapor}.`,
-    );
-  };
-
-  const handleUpdateStatusPenduduk = (
-    id: string,
-    statusBaru: "Diterima" | "Ditolak",
-  ) => {
+  // Handler RT Memverifikasi & Mengajukan Sanggahan Data Penduduk ke Sekdes
+  const handleAjukanPendudukKeSekdes = (id: string) => {
     setSanggahanPendudukList((prev) =>
       prev.map((item) =>
-        item.id === id ? { ...item, status: statusBaru } : item,
+        item.id === id ? { ...item, status: "Diajukan ke Sekdes" } : item,
       ),
     );
     setNotif(
-      `Status sanggahan data kependudukan telah ditandai selesai: [${statusBaru}].`,
+      "Sukses: Sanggahan data kependudukan berhasil divalidasi RT dan dikirimkan ke Sekretaris Desa.",
     );
     setTimeout(() => setNotif(""), 4000);
   };
 
-  const handleUpdateStatusRumah = (
-    id: string,
-    statusBaru: "Diterima" | "Ditolak",
-  ) => {
+  // Handler RT Memverifikasi & Mengajukan Sanggahan Kondisi Rumah ke Sekdes
+  const handleAjukanRumahKeSekdes = (id: string) => {
     setSanggahanRumahList((prev) =>
       prev.map((item) =>
-        item.id === id ? { ...item, status: statusBaru } : item,
+        item.id === id ? { ...item, status: "Diajukan ke Sekdes" } : item,
       ),
     );
     setNotif(
-      `Status sanggahan kondisi rumah telah ditandai selesai: [${statusBaru}].`,
+      "Sukses: Hasil survei ulang kondisi rumah berhasil diteruskan ke Sekretaris Desa.",
     );
     setTimeout(() => setNotif(""), 4000);
   };
 
-  // Submit Handler untuk Mutasi Lengkap (1. Baru, 2. Non-Aktif, 3. Koreksi)
+  // Handler Submit Form Mutasi Lengkap (1. Baru, 2. Non-Aktif, 3. Koreksi)
   const handleMutasiLengkap = (e: React.FormEvent, dataHasil: any) => {
     e.preventDefault();
     const { kategoriAksi, dataForm } = dataHasil;
@@ -162,6 +145,7 @@ export default function DashboardRT() {
     setTimeout(() => setNotif(""), 4000);
   };
 
+  // Handler Submit Hasil Survei Kelayakan Bansos (Prodeskel DDK)
   const handleSubmitSurvei = (e: React.FormEvent, dataHasil: any) => {
     e.preventDefault();
     setNotif(
@@ -176,21 +160,25 @@ export default function DashboardRT() {
       <RTHeader />
 
       <main className="max-w-7xl mx-auto px-6 lg:px-12 py-8 space-y-8">
+        {/* NOTIFIKASI AKSI */}
         {notif && (
           <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-950 rounded-xl text-sm font-semibold transition shadow-sm">
             {notif}
           </div>
         )}
 
+        {/* ACTION GRID (KARTU FITUR UTAMA RT) */}
         <ActionGrid
           onSelectAction={handleSelectAction}
           activeMode={activeMode}
         />
 
+        {/* AREA KONTEN BERDASARKAN KARTU FITUR YANG DIBUKA */}
         <section className="pt-2">
+          {/* MENU 1: MASTER DATA WARGA */}
           {activeMode === "warga" && <TableWarga data={mockWargaRT} />}
 
-          {/* Opsi 2: Mutasi Kependudukan Lengkap (Baru / Non-Aktif / Koreksi) */}
+          {/* MENU 2: PENDATAAN & MUTASI WARGA (BARU / NON-AKTIF / KOREKSI) */}
           {activeMode === "kependudukan" && (
             <FormMutasiLengkap
               daftarWarga={mockWargaRT}
@@ -200,6 +188,7 @@ export default function DashboardRT() {
             />
           )}
 
+          {/* MENU 3: SURVEI KELAYAKAN BANSOS (PRODESKEL DDK) */}
           {activeMode === "kelayakan" && (
             <FormSurveiKelayakan
               daftarWarga={mockWargaRT}
@@ -209,14 +198,13 @@ export default function DashboardRT() {
             />
           )}
 
+          {/* MENU 4: KELOLA SANGGAHAN WARGA */}
           {activeMode === "sanggahan" && (
             <CardSanggahan
-              sanggahanPendudukList={sanggahanPendudukList}
-              sanggahanRumahList={sanggahanRumahList}
-              onVerifikasiPenduduk={handleVerifikasiPenduduk}
-              onVerifikasiRumah={handleVerifikasiRumah}
-              onUpdateStatusPenduduk={handleUpdateStatusPenduduk}
-              onUpdateStatusRumah={handleUpdateStatusRumah}
+              sanggahanPendudukList={sanggahanPendudukList || []}
+              sanggahanRumahList={sanggahanRumahList || []}
+              onAjukanPendudukKeSekdes={handleAjukanPendudukKeSekdes}
+              onAjukanRumahKeSekdes={handleAjukanRumahKeSekdes}
             />
           )}
         </section>
