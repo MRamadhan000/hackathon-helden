@@ -11,73 +11,151 @@ import CardSanggahan, {
 import FormMutasiLengkap from "@/components/rt/FormMutasiLengkap";
 import FormSurveiKelayakan from "@/components/rt/FormSurveiKelayakan";
 
-// Mock Data Master Kependudukan Warga RT (Skema tweb_penduduk)
-const mockWargaRT: PendudukRT[] = [
-  {
-    id: "uuid-001",
-    nik: "3507011234560001",
-    nama: "Budi Santoso",
-    jenisKelamin: "L",
-    tempatLahir: "Kab. Malang",
-    tanggalLahir: "1985-05-12",
-    statusPenduduk: "Tetap",
-    statusVerifikasiDukcapil: "Terverifikasi",
-    terakhirDiperbarui: "2025-11-10", // < 2 Tahun (Terverifikasi/Aktif)
-  },
-  {
-    id: "uuid-002",
-    nik: "3507019876540002",
-    nama: "Siti Aminah",
-    jenisKelamin: "P",
-    tempatLahir: "Kota Surabaya",
-    tanggalLahir: "1958-08-24",
-    statusPenduduk: "Tetap",
-    statusVerifikasiDukcapil: "Terverifikasi",
-    terakhirDiperbarui: "2023-04-15", // >= 2 Tahun (Butuh Pemutakhiran)
-  },
-  {
-    id: "uuid-003",
-    nik: "3507015554440003",
-    nama: "Joko Widodo (Alm)",
-    jenisKelamin: "L",
-    tempatLahir: "Kab. Blitar",
-    tanggalLahir: "1945-01-15",
-    statusPenduduk: "Meninggal",
-    statusVerifikasiDukcapil: "Anomali / Unverified",
-    terakhirDiperbarui: "2026-01-20", // < 2 Tahun (Terverifikasi/Aktif)
-  },
-];
+// Mock Data Warga Per Tahun
+const mockWargaPerTahun: Record<string, PendudukRT[]> = {
+  "2026": [
+    {
+      id: "uuid-001",
+      nik: "3507011234560001",
+      nama: "Budi Santoso",
+      jenisKelamin: "L",
+      tempatLahir: "Kab. Malang",
+      tanggalLahir: "1985-05-12",
+      statusPenduduk: "Tetap",
+      statusVerifikasiDukcapil: "Terverifikasi",
+      terakhirDiperbarui: "2025-11-10",
+    },
+    {
+      id: "uuid-002",
+      nik: "3507019876540002",
+      nama: "Siti Aminah",
+      jenisKelamin: "P",
+      tempatLahir: "Kota Surabaya",
+      tanggalLahir: "1958-08-24",
+      statusPenduduk: "Tetap",
+      statusVerifikasiDukcapil: "Terverifikasi",
+      terakhirDiperbarui: "2023-04-15",
+    },
+    {
+      id: "uuid-003",
+      nik: "3507015554440003",
+      nama: "Joko Widodo (Alm)",
+      jenisKelamin: "L",
+      tempatLahir: "Kab. Blitar",
+      tanggalLahir: "1945-01-15",
+      statusPenduduk: "Meninggal",
+      statusVerifikasiDukcapil: "Anomali / Unverified",
+      terakhirDiperbarui: "2026-01-20",
+    },
+  ],
+  "2025": [
+    {
+      id: "uuid-001",
+      nik: "3507011234560001",
+      nama: "Budi Santoso",
+      jenisKelamin: "L",
+      tempatLahir: "Kab. Malang",
+      tanggalLahir: "1985-05-12",
+      statusPenduduk: "Tetap",
+      statusVerifikasiDukcapil: "Terverifikasi",
+      terakhirDiperbarui: "2025-02-10",
+    },
+    {
+      id: "uuid-002",
+      nik: "3507019876540002",
+      nama: "Siti Aminah",
+      jenisKelamin: "P",
+      tempatLahir: "Kota Surabaya",
+      tanggalLahir: "1958-08-24",
+      statusPenduduk: "Tetap",
+      statusVerifikasiDukcapil: "Terverifikasi",
+      terakhirDiperbarui: "2023-04-15",
+    },
+  ],
+  "2024": [
+    {
+      id: "uuid-001",
+      nik: "3507011234560001",
+      nama: "Budi Santoso",
+      jenisKelamin: "L",
+      tempatLahir: "Kab. Malang",
+      tanggalLahir: "1985-05-12",
+      statusPenduduk: "Tetap",
+      statusVerifikasiDukcapil: "Terverifikasi",
+      terakhirDiperbarui: "2024-01-11",
+    },
+  ],
+};
 
-// Mock Sanggahan 1: Ketidakcocokan Data Kependudukan
-const initialSanggahanPenduduk: SanggahanDataPenduduk[] = [
-  {
-    id: "sp-1",
-    namaPelapor: "Siti Aminah",
-    nikPelapor: "3507019876540002",
-    jenisKetidakcocokan: "Ejaan Nama / NIK Typo",
-    alasanSanggahan:
-      "Ejaan nama di KTP terdaftar Siti Aminah, S.Pd tetapi di data desa belum ada gelar.",
-    tanggalMasuk: "01/08/2026",
-    status: "Pending",
-  },
-];
+const mockSanggahanPendudukPerTahun: Record<string, SanggahanDataPenduduk[]> = {
+  "2026": [
+    {
+      id: "sp-2026-1",
+      namaPelapor: "Siti Aminah",
+      nikPelapor: "3507019876540002",
+      jenisKetidakcocokan: "Ejaan Nama / NIK Typo",
+      alasanSanggahan:
+        "Ejaan nama di KTP terdaftar Siti Aminah, S.Pd tetapi di data desa belum ada gelar.",
+      tanggalMasuk: "01/08/2026",
+      status: "Pending",
+    },
+  ],
+  "2025": [
+    {
+      id: "sp-2025-1",
+      namaPelapor: "Budi Santoso",
+      nikPelapor: "3507011234560001",
+      jenisKetidakcocokan: "Status Domisili",
+      alasanSanggahan: "Perbaikan nomor rumah RT 03 / RW 01.",
+      tanggalMasuk: "14/05/2025",
+      status: "Diajukan ke Sekdes",
+    },
+  ],
+  "2024": [
+    {
+      id: "sp-2024-1",
+      namaPelapor: "Joko Widodo",
+      nikPelapor: "3507015554440003",
+      jenisKetidakcocokan: "Ejaan Nama / NIK Typo",
+      alasanSanggahan: "Koreksi NIK digit terakhir.",
+      tanggalMasuk: "10/09/2024",
+      status: "Tidak Diajukan",
+    },
+  ],
+};
 
-// Mock Sanggahan 2: Ketidakcocokan Kondisi Rumah (Prodeskel DDK)
-const initialSanggahanRumah: SanggahanKondisiRumah[] = [
-  {
-    id: "sr-1",
-    namaPelapor: "Ahmad Subari",
-    nikPelapor: "3507010202020003",
-    jenisLantai: "Tanah / Plester Rusak",
-    jenisDinding: "Bambu / Kayu Lapuk",
-    sanitasi: "Numpang / Tidak Ada Jamban",
-    skorSistem: 75,
-    alasanWarga:
-      "Kondisi dinding rumah lapuk dan belum punya jamban pribadi, mohon diusulkan BLT.",
-    tanggalMasuk: "31/07/2026",
-    status: "Pending",
-  },
-];
+const mockSanggahanRumahPerTahun: Record<string, SanggahanKondisiRumah[]> = {
+  "2026": [
+    {
+      id: "sr-2026-1",
+      namaPelapor: "Ahmad Subari",
+      nikPelapor: "3507010202020003",
+      jenisLantai: "Tanah / Plester Rusak",
+      jenisDinding: "Bambu / Kayu Lapuk",
+      sanitasi: "Numpang / Tidak Ada Jamban",
+      skorSistem: 75,
+      alasanWarga:
+        "Kondisi dinding rumah lapuk dan belum punya jamban pribadi, mohon diusulkan BLT.",
+      tanggalMasuk: "31/07/2026",
+      status: "Pending",
+    },
+  ],
+  "2025": [
+    {
+      id: "sr-2025-1",
+      namaPelapor: "Siti Aminah",
+      nikPelapor: "3507019876540002",
+      jenisLantai: "Semen / Keramik",
+      jenisDinding: "Tembok / Kayu Bagus",
+      sanitasi: "Jamban Pribadi",
+      skorSistem: 20,
+      alasanWarga: "Pengusulan PKH Lansia.",
+      tanggalMasuk: "02/03/2025",
+      status: "Diajukan ke Sekdes",
+    },
+  ],
+  "2024": [],
+};
 
 export default function DashboardRT() {
   const [tahunPeriode, setTahunPeriode] = useState("2026");
@@ -88,14 +166,10 @@ export default function DashboardRT() {
   const [selectedNik, setSelectedNik] = useState("");
   const [notif, setNotif] = useState("");
 
-  // State List Sanggahan Berjenjang (RT -> Sekdes)
-  const [sanggahanPendudukList, setSanggahanPendudukList] = useState<
-    SanggahanDataPenduduk[]
-  >(initialSanggahanPenduduk);
-
-  const [sanggahanRumahList, setSanggahanRumahList] = useState<
-    SanggahanKondisiRumah[]
-  >(initialSanggahanRumah);
+  const dataWargaAktif = mockWargaPerTahun[tahunPeriode] || [];
+  const sanggahanPendudukAktif =
+    mockSanggahanPendudukPerTahun[tahunPeriode] || [];
+  const sanggahanRumahAktif = mockSanggahanRumahPerTahun[tahunPeriode] || [];
 
   const handleSelectAction = (
     mode: "warga" | "kependudukan" | "kelayakan" | "sanggahan",
@@ -104,35 +178,25 @@ export default function DashboardRT() {
     setSelectedNik("");
   };
 
-  // Handler RT Memverifikasi & Mengajukan Sanggahan Data Penduduk ke Sekdes
   const handleAjukanPendudukKeSekdes = (id: string) => {
-    setSanggahanPendudukList((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, status: "Diajukan ke Sekdes" } : item,
-      ),
-    );
+    if (tahunPeriode !== "2026") return;
     setNotif(
       "Sukses: Sanggahan data kependudukan berhasil divalidasi RT dan dikirimkan ke Sekretaris Desa.",
     );
     setTimeout(() => setNotif(""), 4000);
   };
 
-  // Handler RT Memverifikasi & Mengajukan Sanggahan Kondisi Rumah ke Sekdes
   const handleAjukanRumahKeSekdes = (id: string) => {
-    setSanggahanRumahList((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, status: "Diajukan ke Sekdes" } : item,
-      ),
-    );
+    if (tahunPeriode !== "2026") return;
     setNotif(
       "Sukses: Hasil survei ulang kondisi rumah berhasil diteruskan ke Sekretaris Desa.",
     );
     setTimeout(() => setNotif(""), 4000);
   };
 
-  // Handler Submit Form Mutasi Lengkap (1. Baru, 2. Non-Aktif, 3. Koreksi)
   const handleMutasiLengkap = (e: React.FormEvent, dataHasil: any) => {
     e.preventDefault();
+    if (tahunPeriode !== "2026") return;
     const { kategoriAksi, dataForm } = dataHasil;
 
     let pesan = "";
@@ -149,9 +213,9 @@ export default function DashboardRT() {
     setTimeout(() => setNotif(""), 4000);
   };
 
-  // Handler Submit Hasil Survei Kelayakan Bansos (Prodeskel DDK)
   const handleSubmitSurvei = (e: React.FormEvent, dataHasil: any) => {
     e.preventDefault();
+    if (tahunPeriode !== "2026") return;
     setNotif(
       `Sukses: Hasil Survei Prodeskel atas nama ${dataHasil.nama} (${dataHasil.nik}) dengan Skor ${dataHasil.skor} Poin [${dataHasil.kategori}] berhasil diteruskan ke Sekretaris Desa.`,
     );
@@ -161,53 +225,48 @@ export default function DashboardRT() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950 font-sans antialiased">
-      {/* HEADER DENGAN FILTER TAHUN PERIODE */}
       <RTHeader tahunPeriode={tahunPeriode} setTahunPeriode={setTahunPeriode} />
 
       <main className="max-w-7xl mx-auto px-6 lg:px-12 py-8 space-y-8">
-        {/* NOTIFIKASI AKSI */}
         {notif && (
           <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-950 rounded-xl text-sm font-semibold transition shadow-sm">
             {notif}
           </div>
         )}
 
-        {/* ACTION GRID (KARTU FITUR UTAMA RT) */}
         <ActionGrid
           onSelectAction={handleSelectAction}
           activeMode={activeMode}
         />
 
-        {/* AREA KONTEN BERDASARKAN KARTU FITUR YANG DIBUKA */}
         <section className="pt-2">
-          {/* MENU 1: MASTER DATA WARGA */}
-          {activeMode === "warga" && <TableWarga data={mockWargaRT} />}
+          {activeMode === "warga" && <TableWarga data={dataWargaAktif} />}
 
-          {/* MENU 2: PENDATAAN & MUTASI WARGA (BARU / NON-AKTIF / KOREKSI) */}
           {activeMode === "kependudukan" && (
             <FormMutasiLengkap
-              daftarWarga={mockWargaRT}
+              tahunPeriode={tahunPeriode}
+              daftarWarga={dataWargaAktif}
               selectedNik={selectedNik}
               setSelectedNik={setSelectedNik}
               onSubmitMutasi={handleMutasiLengkap}
             />
           )}
 
-          {/* MENU 3: SURVEI KELAYAKAN BANSOS (PRODESKEL DDK) */}
           {activeMode === "kelayakan" && (
             <FormSurveiKelayakan
-              daftarWarga={mockWargaRT}
+              tahunPeriode={tahunPeriode}
+              daftarWarga={dataWargaAktif}
               selectedNik={selectedNik}
               setSelectedNik={setSelectedNik}
               onSubmitSurvei={handleSubmitSurvei}
             />
           )}
 
-          {/* MENU 4: KELOLA SANGGAHAN WARGA */}
           {activeMode === "sanggahan" && (
             <CardSanggahan
-              sanggahanPendudukList={sanggahanPendudukList || []}
-              sanggahanRumahList={sanggahanRumahList || []}
+              tahunPeriode={tahunPeriode}
+              sanggahanPendudukList={sanggahanPendudukAktif}
+              sanggahanRumahList={sanggahanRumahAktif}
               onAjukanPendudukKeSekdes={handleAjukanPendudukKeSekdes}
               onAjukanRumahKeSekdes={handleAjukanRumahKeSekdes}
             />

@@ -13,7 +13,8 @@ export interface SanggahanDataPenduduk {
     | "Pending"
     | "Diajukan ke Sekdes"
     | "Diterima Sekdes"
-    | "Ditolak Sekdes";
+    | "Ditolak Sekdes"
+    | "Tidak Diajukan";
 }
 
 export interface SanggahanKondisiRumah {
@@ -30,10 +31,12 @@ export interface SanggahanKondisiRumah {
     | "Pending"
     | "Diajukan ke Sekdes"
     | "Diterima Sekdes"
-    | "Ditolak Sekdes";
+    | "Ditolak Sekdes"
+    | "Tidak Diajukan";
 }
 
 interface CardSanggahanProps {
+  tahunPeriode: string;
   sanggahanPendudukList?: SanggahanDataPenduduk[];
   sanggahanRumahList?: SanggahanKondisiRumah[];
   onAjukanPendudukKeSekdes: (id: string) => void;
@@ -41,12 +44,14 @@ interface CardSanggahanProps {
 }
 
 export default function CardSanggahan({
+  tahunPeriode,
   sanggahanPendudukList = [],
   sanggahanRumahList = [],
   onAjukanPendudukKeSekdes,
   onAjukanRumahKeSekdes,
 }: CardSanggahanProps) {
   const [subTab, setSubTab] = useState<"penduduk" | "rumah">("penduduk");
+  const isTahunBerlalu = tahunPeriode !== "2026";
 
   const totalPenduduk = sanggahanPendudukList?.length || 0;
   const totalRumah = sanggahanRumahList?.length || 0;
@@ -65,10 +70,16 @@ export default function CardSanggahan({
             📤 Diajukan RT ke Sekdes
           </span>
         );
+      case "Tidak Diajukan":
+        return (
+          <span className="px-2.5 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded-lg border border-slate-200">
+            🚫 Tidak Diajukan RT
+          </span>
+        );
       case "Diterima Sekdes":
         return (
           <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-lg border border-emerald-200">
-            ✅ Diterima Sekdes (Data Diperbarui)
+            ✅ Diterima Sekdes
           </span>
         );
       case "Ditolak Sekdes":
@@ -84,15 +95,32 @@ export default function CardSanggahan({
 
   return (
     <div className="space-y-6">
+      {/* BANNER REKAP ARSIP UNTUK TAHUN BERLALU */}
+      {isTahunBerlalu && (
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between text-amber-950 text-xs font-semibold shadow-xs">
+          <div className="flex items-center gap-2">
+            <span>🔒</span>
+            <span>
+              <strong>Mode Arsip Historis ({tahunPeriode}):</strong> Data
+              sanggahan di tahun ini sudah final dan dikunci.
+            </span>
+          </div>
+          <span className="px-3 py-1 bg-amber-200/60 rounded-lg text-[11px] font-black">
+            Total Sanggahan {tahunPeriode}: {totalPenduduk + totalRumah} Masuk
+          </span>
+        </div>
+      )}
+
       {/* HEADER & TOGGLE SUB-TAB */}
       <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h3 className="text-base font-bold text-slate-900">
-            Pusat Pengelolaan Sanggahan Warga
+            Pusat Pengelolaan Sanggahan Warga ({tahunPeriode})
           </h3>
           <p className="text-xs text-slate-500 mt-0.5">
-            Verifikasi sanggahan warga di tingkat RT dan teruskan pengajuan
-            persetujuan ke Sekretaris Desa.
+            {isTahunBerlalu
+              ? "Rekapitulasi historis status pengajuan sanggahan RT ke Sekdes."
+              : "Verifikasi sanggahan warga di tingkat RT dan teruskan pengajuan persetujuan ke Sekdes."}
           </p>
         </div>
 
@@ -125,7 +153,8 @@ export default function CardSanggahan({
         <div className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-sm">
           <div className="p-5 border-b border-slate-100 bg-slate-50/50">
             <h4 className="text-sm font-bold text-slate-900">
-              Daftar Sanggahan: Ketidakcocokan Data Kependudukan
+              Daftar Sanggahan: Ketidakcocokan Data Kependudukan ({tahunPeriode}
+              )
             </h4>
           </div>
 
@@ -137,7 +166,7 @@ export default function CardSanggahan({
                   <th className="px-6 py-4">Kategori Masalah</th>
                   <th className="px-6 py-4">Isi Sanggahan Warga</th>
                   <th className="px-6 py-4">Status Alur Berjenjang</th>
-                  <th className="px-6 py-4 text-right">Aksi Ketua RT</th>
+                  <th className="px-6 py-4 text-right">Keputusan Akhir RT</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
@@ -170,7 +199,7 @@ export default function CardSanggahan({
                         {renderBadgeStatus(item.status)}
                       </td>
                       <td className="px-6 py-4 text-right">
-                        {item.status === "Pending" ? (
+                        {!isTahunBerlalu && item.status === "Pending" ? (
                           <button
                             onClick={() => onAjukanPendudukKeSekdes(item.id)}
                             className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition shadow-sm cursor-pointer"
@@ -178,8 +207,18 @@ export default function CardSanggahan({
                             Verifikasi & Ajukan ke Sekdes →
                           </button>
                         ) : (
-                          <span className="text-xs font-semibold text-slate-400 italic">
-                            Telah Diproses RT
+                          <span
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold inline-block ${
+                              item.status === "Diajukan ke Sekdes" ||
+                              item.status === "Diterima Sekdes"
+                                ? "bg-blue-50 text-blue-800 border border-blue-200"
+                                : "bg-slate-100 text-slate-600 border border-slate-200"
+                            }`}
+                          >
+                            {item.status === "Diajukan ke Sekdes" ||
+                            item.status === "Diterima Sekdes"
+                              ? "✓ Diajukan ke Sekdes"
+                              : "✕ Tidak Diajukan"}
                           </span>
                         )}
                       </td>
@@ -191,7 +230,8 @@ export default function CardSanggahan({
                       colSpan={5}
                       className="p-8 text-center text-slate-400 text-xs"
                     >
-                      Tidak ada sanggahan data kependudukan.
+                      Tidak ada riwayat sanggahan data kependudukan pada tahun{" "}
+                      {tahunPeriode}.
                     </td>
                   </tr>
                 )}
@@ -207,6 +247,7 @@ export default function CardSanggahan({
           <div className="p-5 border-b border-slate-100 bg-slate-50/50">
             <h4 className="text-sm font-bold text-slate-900">
               Daftar Sanggahan: Ketidakcocokan Kondisi Rumah & Kelayakan Bansos
+              ({tahunPeriode})
             </h4>
           </div>
 
@@ -218,7 +259,7 @@ export default function CardSanggahan({
                   <th className="px-6 py-4">Indikator Terdata</th>
                   <th className="px-6 py-4">Skor Sistem</th>
                   <th className="px-6 py-4">Status Alur Berjenjang</th>
-                  <th className="px-6 py-4 text-right">Aksi Ketua RT</th>
+                  <th className="px-6 py-4 text-right">Keputusan Akhir RT</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
@@ -265,7 +306,7 @@ export default function CardSanggahan({
                         {renderBadgeStatus(item.status)}
                       </td>
                       <td className="px-6 py-4 text-right">
-                        {item.status === "Pending" ? (
+                        {!isTahunBerlalu && item.status === "Pending" ? (
                           <button
                             onClick={() => onAjukanRumahKeSekdes(item.id)}
                             className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition shadow-sm cursor-pointer"
@@ -273,8 +314,18 @@ export default function CardSanggahan({
                             Survei Ulang & Ajukan ke Sekdes →
                           </button>
                         ) : (
-                          <span className="text-xs font-semibold text-slate-400 italic">
-                            Telah Diproses RT
+                          <span
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold inline-block ${
+                              item.status === "Diajukan ke Sekdes" ||
+                              item.status === "Diterima Sekdes"
+                                ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                                : "bg-slate-100 text-slate-600 border border-slate-200"
+                            }`}
+                          >
+                            {item.status === "Diajukan ke Sekdes" ||
+                            item.status === "Diterima Sekdes"
+                              ? "✓ Diajukan ke Sekdes"
+                              : "✕ Tidak Diajukan"}
                           </span>
                         )}
                       </td>
@@ -286,7 +337,8 @@ export default function CardSanggahan({
                       colSpan={5}
                       className="p-8 text-center text-slate-400 text-xs"
                     >
-                      Tidak ada sanggahan kondisi rumah.
+                      Tidak ada riwayat sanggahan kondisi rumah pada tahun{" "}
+                      {tahunPeriode}.
                     </td>
                   </tr>
                 )}

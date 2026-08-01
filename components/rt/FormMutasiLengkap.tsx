@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import { PendudukRT } from "./TableWarga";
 import SearchableNikSelect from "./SearchableNikSelect";
 
-// Daftar Pilihan Tempat Lahir (Kabupaten / Kota)
 const DAFTAR_KOTA_LAHIR = [
   "Kab. Malang",
   "Kota Malang",
@@ -20,7 +19,40 @@ const DAFTAR_KOTA_LAHIR = [
   "DKI Jakarta",
 ];
 
+// Mock Data Riwayat Mutasi Tahun Berlalu
+const mockRiwayatMutasiPerTahun: Record<string, any[]> = {
+  "2025": [
+    {
+      id: "m-1",
+      tanggal: "12/04/2025",
+      jenis: "1. Warga Baru",
+      nik: "3507011234560001",
+      nama: "Budi Santoso",
+      keterangan: "Pendaftaran Pindah Masuk RT",
+    },
+    {
+      id: "m-2",
+      tanggal: "20/08/2025",
+      jenis: "2. Non-Aktif",
+      nik: "3507019876540002",
+      nama: "Siti Aminah",
+      keterangan: "Non-Aktif (Pindah Wilayah)",
+    },
+  ],
+  "2024": [
+    {
+      id: "m-3",
+      tanggal: "10/11/2024",
+      jenis: "3. Koreksi Data",
+      nik: "3507015554440003",
+      nama: "Joko Widodo",
+      keterangan: "Koreksi Ejaan Tempat Lahir",
+    },
+  ],
+};
+
 interface FormMutasiLengkapProps {
+  tahunPeriode: string;
   daftarWarga: PendudukRT[];
   selectedNik: string;
   setSelectedNik: (nik: string) => void;
@@ -28,17 +60,18 @@ interface FormMutasiLengkapProps {
 }
 
 export default function FormMutasiLengkap({
+  tahunPeriode,
   daftarWarga,
   selectedNik,
   setSelectedNik,
   onSubmitMutasi,
 }: FormMutasiLengkapProps) {
-  // Mode Pelaporan: 1. Baru | 2. Non-Aktif | 3. Koreksi
+  const isTahunBerlalu = tahunPeriode !== "2026";
+  const riwayatMutasi = mockRiwayatMutasiPerTahun[tahunPeriode] || [];
+
   const [subAksi, setSubAksi] = useState<"baru" | "nonaktif" | "koreksi">(
     "baru",
   );
-
-  // Form State Warga Baru / Edit Data
   const [formDetail, setFormDetail] = useState({
     nik: "",
     nama: "",
@@ -48,7 +81,6 @@ export default function FormMutasiLengkap({
     alasanNonAktif: "Meninggal Dunia",
   });
 
-  // Handler Auto-Fill saat NIK Dipilih untuk Non-Aktif / Koreksi
   const handleSelectWargaEksisting = (nik: string) => {
     setSelectedNik(nik);
     const w = daftarWarga.find((item) => item.nik === nik);
@@ -72,11 +104,93 @@ export default function FormMutasiLengkap({
     });
   };
 
+  // TAMPILAN JIKA TAHUN BERLALU (MODE HISTORIS DAFTAR LIST)
+  if (isTahunBerlalu) {
+    return (
+      <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-50 text-amber-800 rounded-full text-xs font-bold mb-1">
+              🔒 Mode Arsip Data ({tahunPeriode})
+            </div>
+            <h3 className="text-base font-bold text-slate-950">
+              Riwayat Pelaporan Mutasi & Kependudukan Tahun {tahunPeriode}
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Daftar transaksi penginputan mutasi warga yang dilaporkan pada
+              tahun ini.
+            </p>
+          </div>
+          <span className="px-3 py-1.5 bg-slate-100 text-slate-700 text-xs font-bold rounded-xl border border-slate-200">
+            Total Laporan: {riwayatMutasi.length} Data
+          </span>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm border-collapse">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200/80 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                <th className="px-5 py-3">Tgl Lapor</th>
+                <th className="px-5 py-3">Kategori Mutasi</th>
+                <th className="px-5 py-3">Warga Terkait</th>
+                <th className="px-5 py-3">Keterangan Transaksi</th>
+                <th className="px-5 py-3 text-right">Status Sekdes</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
+              {riwayatMutasi.length > 0 ? (
+                riwayatMutasi.map((item) => (
+                  <tr key={item.id} className="hover:bg-slate-50/60 transition">
+                    <td className="px-5 py-3.5 text-xs text-slate-500 font-mono">
+                      {item.tanggal}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <span className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-800 font-bold text-xs border border-blue-100">
+                        {item.jenis}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <p className="font-bold text-slate-900 text-xs">
+                        {item.nama}
+                      </p>
+                      <p className="font-mono text-[11px] text-slate-400">
+                        NIK: {item.nik}
+                      </p>
+                    </td>
+                    <td className="px-5 py-3.5 text-xs text-slate-600">
+                      {item.keterangan}
+                    </td>
+                    <td className="px-5 py-3.5 text-right">
+                      <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold">
+                        ✓ Disetujui Sekdes
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="p-8 text-center text-slate-400 text-xs"
+                  >
+                    Tidak ada riwayat penginputan mutasi pada tahun{" "}
+                    {tahunPeriode}.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
+
+  // TAMPILAN JIKA TAHUN AKTIF (2026) - FORM INPUT
   return (
     <div className="bg-white p-8 rounded-2xl border border-slate-200/80 max-w-2xl mx-auto shadow-sm space-y-6">
       <div>
         <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-800 rounded-full text-xs font-bold mb-2">
-          📋 Master Pendataan & Pembaruan Data RT
+          📋 Master Pendataan & Pembaruan Data RT (2026)
         </div>
         <h3 className="text-base font-bold text-slate-950">
           Formulir Mutasi & Pemutakhiran Data Kependudukan
@@ -87,7 +201,6 @@ export default function FormMutasiLengkap({
         </p>
       </div>
 
-      {/* 3 OPSI UTAMA PERUBAHAN DATA */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <button
           type="button"
@@ -156,7 +269,6 @@ export default function FormMutasiLengkap({
         onSubmit={handleSubmit}
         className="space-y-5 pt-2 border-t border-slate-100"
       >
-        {/* DROPDOWN NIK UNTUK NON-AKTIF / KOREKSI */}
         {subAksi !== "baru" && (
           <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/80 space-y-2">
             <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
@@ -171,10 +283,8 @@ export default function FormMutasiLengkap({
           </div>
         )}
 
-        {/* INPUTAN UTAMA DATA PENDUDUK */}
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* NIK */}
             <div>
               <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
                 NIK Warga (16 Digit) *
@@ -193,7 +303,6 @@ export default function FormMutasiLengkap({
               />
             </div>
 
-            {/* Nama Lengkap */}
             <div>
               <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
                 Nama Lengkap Warga *
@@ -213,7 +322,6 @@ export default function FormMutasiLengkap({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* Jenis Kelamin */}
             <div>
               <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
                 Jenis Kelamin *
@@ -234,7 +342,6 @@ export default function FormMutasiLengkap({
               </select>
             </div>
 
-            {/* Tempat Lahir (DROPDOWN SELECTION) */}
             <div>
               <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
                 Tempat Lahir *
@@ -245,7 +352,7 @@ export default function FormMutasiLengkap({
                 onChange={(e) =>
                   setFormDetail({ ...formDetail, tempatLahir: e.target.value })
                 }
-                className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-xs font-semibold bg-white disabled:bg-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer"
+                className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-xs font-semibold bg-white disabled:bg-slate-100 cursor-pointer"
               >
                 {DAFTAR_KOTA_LAHIR.map((kota, idx) => (
                   <option key={idx} value={kota}>
@@ -255,7 +362,6 @@ export default function FormMutasiLengkap({
               </select>
             </div>
 
-            {/* Tanggal Lahir */}
             <div>
               <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
                 Tanggal Lahir *
@@ -273,7 +379,6 @@ export default function FormMutasiLengkap({
             </div>
           </div>
 
-          {/* OPSI KHUSUS PELAPORAN NON-AKTIF */}
           {subAksi === "nonaktif" && (
             <div className="bg-rose-50 p-4 rounded-xl border border-rose-200 space-y-2">
               <label className="block text-[10px] font-bold uppercase tracking-wider text-rose-800">
@@ -303,10 +408,9 @@ export default function FormMutasiLengkap({
           )}
         </div>
 
-        {/* SUBMIT BUTTON */}
         <button
           type="submit"
-          className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition shadow-md shadow-blue-600/10"
+          className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition shadow-md shadow-blue-600/10 cursor-pointer"
         >
           {subAksi === "baru" &&
             "Kirim Laporan Pendaftaran Warga Baru ke Sekdes →"}
