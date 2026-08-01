@@ -24,7 +24,7 @@ const MOCK_PEGAWAI_ACCOUNTS = [
     password: "123",
     role: "ketua_rt",
     name: "Pak RT 01",
-    route: "/rt/dashboard",
+    route: "/rt",
   },
 ];
 
