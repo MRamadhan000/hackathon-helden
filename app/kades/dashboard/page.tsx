@@ -1,9 +1,9 @@
-import Navbar from "./components/landing/Navbar";
-import HeroSection from "./components/landing/HeroSection";
-import BridgeSection from "./components/landing/BridgeSection";
-import StatSection from "./components/landing/StatSection";
-import BudgetSection from "./components/landing/BudgetSection";
-import Footer from "./components/landing/Footer";
+import Navbar from "../../../components/kades/Navbar";
+import HeroSection from "../../../components/kades/HeroSection";
+import BridgeSection from "../../../components/kades/BridgeSection";
+import StatSection from "../../../components/kades/StatSection";
+import BudgetSection from "../../../components/kades/BudgetSection";
+import Footer from "../../../components/kades/Footer";
 
 export default function LandingPageDesa() {
   return (
