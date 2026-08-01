@@ -48,8 +48,8 @@ export interface MutasiSubmitPayload {
   tanggalLahir: string;
   jenisKelamin: string;
   agama: string;
-  keluargaId: string;
-  clusterdesaId: string;
+  // keluargaId: string;
+  // clusterdesaId: string;
   jenisMutasi: JenisMutasi;
   keterangan?: string;
   tipeProses: TipeProses;

@@ -133,7 +133,7 @@ export default function FormMutasiLengkap({
     jenisKelamin: "L" as "L" | "P",
     tempatLahir: "Kab. Malang",
     tanggalLahir: "",
-    alasanNonAktif: "Meninggal Dunia",
+    keterangan: "Meninggal Dunia",
   });
 
   const handleSelectWargaEksisting = (nik: string) => {
@@ -161,7 +161,7 @@ export default function FormMutasiLengkap({
         jenisKelamin: "L",
         tempatLahir: "Kab. Malang",
         tanggalLahir: "",
-        alasanNonAktif: "Meninggal Dunia",
+        keterangan: "Meninggal Dunia",
       });
     }
   };
@@ -170,8 +170,50 @@ export default function FormMutasiLengkap({
     setFormDetail((prev) => ({ ...prev, [key]: value }));
   };
 
+  const validateForm = () => {
+    const nik = formDetail.nik.trim();
+    const nama = formDetail.nama.trim();
+    const keterangan = formDetail.keterangan.trim();
+
+    if (!nik) {
+      return "NIK wajib diisi.";
+    }
+
+    if (subAksi === "nonaktif") {
+      if (!keterangan) {
+        return "Keterangan wajib diisi untuk mutasi non-aktif.";
+      }
+
+      return null;
+    }
+
+    if (!nama) {
+      return "Nama lengkap warga wajib diisi.";
+    }
+
+    if (!formDetail.jenisKelamin.trim()) {
+      return "Jenis kelamin wajib dipilih.";
+    }
+
+    if (!formDetail.tempatLahir.trim()) {
+      return "Tempat lahir wajib dipilih.";
+    }
+
+    if (!formDetail.tanggalLahir.trim()) {
+      return "Tanggal lahir wajib diisi.";
+    }
+
+    return null;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const validationError = validateForm();
+    if (validationError) {
+      alert(validationError);
+      return;
+    }
+
     onSubmitMutasi(e, {
       kategoriAksi: subAksi,
       dataForm: formDetail,
@@ -200,7 +242,7 @@ export default function FormMutasiLengkap({
         </div>
 
         <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
-          <table className="w-full text-left text-sm border-collapse min-w-[600px]">
+          <table className="w-full text-left text-sm border-collapse min-w-150">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200/80 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
                 <th className="px-3 sm:px-5 py-3">Tgl Lapor</th>
@@ -230,7 +272,7 @@ export default function FormMutasiLengkap({
                         {item.nik}
                       </p>
                     </td>
-                    <td className="px-3 sm:px-5 py-3.5 text-xs text-slate-600 max-w-[140px] truncate">
+                    <td className="px-3 sm:px-5 py-3.5 text-xs text-slate-600 max-w-35 truncate">
                       {item.keterangan}
                     </td>
                     <td className="px-3 sm:px-5 py-3.5 text-right">
@@ -258,9 +300,11 @@ export default function FormMutasiLengkap({
   }
 
   // ===================== MODE AKTIF → MODAL (RESPONSIVE) =====================
-  const isDisabled = subAksi === "nonaktif";
   const halfFields = FORM_FIELDS.filter((f) => f.grid === "half");
   const thirdFields = FORM_FIELDS.filter((f) => f.grid === "third");
+  const isNonAktif = subAksi === "nonaktif";
+  const isKoreksi = subAksi === "koreksi";
+  const showDetailFields = subAksi !== "nonaktif";
 
   const renderField = (field: (typeof FORM_FIELDS)[number]) => {
     const commonClass =
@@ -274,7 +318,6 @@ export default function FormMutasiLengkap({
 
         {field.type === "select" ? (
           <select
-            disabled={isDisabled}
             value={formDetail[field.key as keyof typeof formDetail] as string}
             onChange={(e) => handleChangeField(field.key, e.target.value)}
             className={`${commonClass} cursor-pointer`}
@@ -290,7 +333,6 @@ export default function FormMutasiLengkap({
             type={field.type}
             required
             maxLength={"maxLength" in field ? field.maxLength : undefined}
-            disabled={isDisabled}
             placeholder={
               "placeholder" in field ? field.placeholder : undefined
             }
@@ -374,10 +416,10 @@ export default function FormMutasiLengkap({
           <div className="grid grid-cols-3 gap-2">
             {SUB_AKSI_OPTIONS.map((opt) => (
               <button
-                key={opt.id}
+                  key={opt.id}
                 type="button"
                 onClick={() => handleChangeSubAksi(opt.id)}
-                className={`px-2 py-2.5 sm:px-3 sm:py-3 rounded-xl border text-center transition flex flex-col items-center justify-center gap-0.5 min-h-[64px] ${
+                className={`px-2 py-2.5 sm:px-3 sm:py-3 rounded-xl border text-center transition flex flex-col items-center justify-center gap-0.5 min-h-16 ${
                   subAksi === opt.id
                     ? "bg-blue-900 text-white border-blue-900 shadow-sm"
                     : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50 active:bg-slate-100"
@@ -398,7 +440,7 @@ export default function FormMutasiLengkap({
           </div>
 
           {/* Banner Koreksi */}
-          {subAksi === "koreksi" && (
+          {isKoreksi && (
             <div className="p-3 bg-blue-50/80 border border-blue-200 rounded-xl flex items-start gap-2.5 text-blue-950">
               <span className="text-base leading-none shrink-0 mt-0.5">💡</span>
               <div>
@@ -431,23 +473,27 @@ export default function FormMutasiLengkap({
 
             {/* Fields */}
             <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {halfFields.map(renderField)}
-              </div>
+              {showDetailFields && (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {halfFields.map(renderField)}
+                  </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {thirdFields.map(renderField)}
-              </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {thirdFields.map(renderField)}
+                  </div>
+                </>
+              )}
 
-              {subAksi === "nonaktif" && (
+              {isNonAktif && (
                 <div className="bg-rose-50 p-3 sm:p-4 rounded-xl border border-rose-200 space-y-2">
                   <label className="block text-[10px] font-bold uppercase tracking-wider text-rose-800">
-                    Alasan Non-Aktif *
+                    Keterangan *
                   </label>
                   <select
-                    value={formDetail.alasanNonAktif}
+                    value={formDetail.keterangan}
                     onChange={(e) =>
-                      handleChangeField("alasanNonAktif", e.target.value)
+                      handleChangeField("keterangan", e.target.value)
                     }
                     className="w-full px-3 py-2.5 border border-rose-200 rounded-xl text-xs font-bold text-rose-950 bg-white"
                   >

@@ -62,7 +62,10 @@ function MutasiContent() {
       statusVerifikasiDukcapil: (p.statusVerifikasiDukcapil === "Anomali / Unverified"
         ? "Anomali / Unverified"
         : "Terverifikasi") as "Terverifikasi" | "Anomali / Unverified",
-      terakhirDiperbarui: "-",
+      terakhirDiperbarui: new Date(p.updated_at).toLocaleString("id-ID", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }),
     }));
   }, [realPendudukList]);
 
@@ -110,18 +113,69 @@ function MutasiContent() {
   const handleMutasiSubmit = async (e: React.FormEvent, data: any) => {
     e.preventDefault();
     try {
+      const kategoriAksi = data?.kategoriAksi || "baru";
+      const formData = data?.dataForm || {};
+      const nik = (formData?.nik || selectedNik || "").trim();
+      const wargaReferensi = daftarWarga.find((item) => item.nik === nik);
+
+      if (!nik) {
+        throw new Error("NIK wajib dipilih atau diisi.");
+      }
+
+      const jenisMutasiMap = {
+        baru: "Warga Baru",
+        nonaktif: "Non-Aktif",
+        koreksi: "Koreksi Data",
+      } as const;
+
+      const jenisMutasi = jenisMutasiMap[kategoriAksi as keyof typeof jenisMutasiMap] || "Warga Baru";
+      const isNonAktif = kategoriAksi === "nonaktif";
+
+      const nama = (formData?.nama || wargaReferensi?.nama || "").trim();
+      const tempatLahir = (formData?.tempatLahir || wargaReferensi?.tempatLahir || "").trim();
+      const tanggalLahir = (formData?.tanggalLahir || wargaReferensi?.tanggalLahir || "").trim();
+      const jenisKelamin = (formData?.jenisKelamin || wargaReferensi?.jenisKelamin || "").trim();
+      const keterangan = (formData?.keterangan || "").trim();
+
+      if (isNonAktif) {
+        if (!keterangan) {
+          throw new Error("Keterangan wajib diisi untuk mutasi non-aktif.");
+        }
+
+        if (!wargaReferensi) {
+          throw new Error("Data warga untuk NIK tersebut tidak ditemukan.");
+        }
+      } else {
+        if (!nama) {
+          throw new Error("Nama lengkap warga wajib diisi.");
+        }
+
+        if (!jenisKelamin) {
+          throw new Error("Jenis kelamin wajib dipilih.");
+        }
+
+        if (!tempatLahir) {
+          throw new Error("Tempat lahir wajib dipilih.");
+        }
+
+        if (!tanggalLahir) {
+          throw new Error("Tanggal lahir wajib diisi.");
+        }
+      }
+
       await submitMutasiHook(
         {
-          nik: data?.nik || selectedNik || "3507000000000001",
-          nama: data?.nama || "Warga Baru",
-          tempatLahir: data?.tempatLahir || "Kab. Malang",
-          tanggalLahir: data?.tanggalLahir || "2000-01-01",
-          jenisKelamin: data?.jenisKelamin || "L",
+          nik,
+          nama: nama || wargaReferensi?.nama || "",
+          tempatLahir: tempatLahir || wargaReferensi?.tempatLahir || "",
+          tanggalLahir: tanggalLahir || wargaReferensi?.tanggalLahir || "",
+          jenisKelamin: (jenisKelamin || wargaReferensi?.jenisKelamin || "L") as "L" | "P",
           agama: data?.agama || "Islam",
-          keluargaId: data?.keluargaId || "00000000-0000-0000-0000-000000000000",
-          clusterdesaId: data?.clusterdesaId || "00000000-0000-0000-0000-000000000000",
-          jenisMutasi: (data?.jenisMutasi as any) || "Warga Baru",
-          keterangan: data?.keterangan || "Pendaftaran offline via Ketua RT",
+          // clusterdesaId: data?.clusterdesaId || "00000000-0000-0000-0000-000000000000",
+          jenisMutasi: jenisMutasi as any,
+          keterangan:
+            keterangan ||
+            (isNonAktif ? "Mutasi non-aktif via Ketua RT" : "Pendaftaran offline via Ketua RT"),
           tipeProses: "OFFLINE",
           reqMethod: "OFFLINE",
           tahunPeriode: tahunPeriode,
@@ -207,7 +261,7 @@ function MutasiContent() {
             <select
               value={filterJenis}
               onChange={(e) => setFilterJenis(e.target.value)}
-              className="w-full sm:w-auto px-4 py-2.5 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:border-blue-500 sm:min-w-[180px] cursor-pointer"
+              className="w-full sm:w-auto px-4 py-2.5 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:border-blue-500 sm:min-w-45 cursor-pointer"
             >
               {FILTER_JENIS.map((j) => (
                 <option key={j} value={j}>
