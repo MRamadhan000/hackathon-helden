@@ -113,7 +113,7 @@ export default function EvaluasiPage() {
           </div>
 
           <Link
-            href="/kades/dashboard"
+            href="/"
             className="self-start md:self-auto inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 font-medium text-sm rounded-xl hover:bg-slate-50 transition shadow-sm"
           >
             ← Kembali ke Dashboard

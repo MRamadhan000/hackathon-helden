@@ -2,36 +2,62 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
-// Simulasi pengecekan NIK dari mock data
+// Simulasi pengecekan NIK dari master data
 const simulasiCekNIK = (nik: string) => {
-  if (nik === "3507011234560001") {
+  if (nik === "3507011234560001" || nik.length === 16) {
     return {
       terdaftar: true,
       nama: "Budi Santoso",
-      status: "Ditetapkan",
-      bantuan: "Bantuan Langsung Tunai (BLT) Dana Desa",
-      noSk: "SK-DESA/2026/089",
+      status: "Ditetapkan SK Kades",
+      bantuan: "BLT Dana Desa",
+      noSk: "SK/2026/089",
     };
   }
   return { terdaftar: false };
 };
 
 export default function LandingPageDesa() {
+  const router = useRouter();
+
+  // State Widget Login Warga Khusus NIK
   const [nikInput, setNikInput] = useState("");
+  const [loading, setLoading] = useState(false);
   const [hasilCek, setHasilCek] = useState<any>(null);
   const [sudahDiperiksa, setSudahDiperiksa] = useState(false);
 
-  const handlePeriksa = (e: React.FormEvent) => {
+  const handlePeriksaNIK = (e: React.FormEvent) => {
     e.preventDefault();
-    const hasil = simulasiCekNIK(nikInput);
-    setHasilCek(hasil);
-    setSudahDiperiksa(true);
+    if (!nikInput || nikInput.length < 16) {
+      alert("Harap masukkan 16 digit NIK KTP resmi Anda.");
+      return;
+    }
+
+    setLoading(true);
+
+    setTimeout(() => {
+      const hasil = simulasiCekNIK(nikInput);
+      setHasilCek(hasil);
+      setSudahDiperiksa(true);
+      setLoading(false);
+
+      // Simpan Sesi Warga
+      if (typeof window !== "undefined") {
+        localStorage.setItem("mock_user_role", "warga");
+        localStorage.setItem("mock_user_nik", nikInput);
+        localStorage.setItem("mock_user_name", hasil.nama || "Budi Santoso");
+      }
+    }, 400);
+  };
+
+  const handleMasukDashboardWarga = () => {
+    router.push("/warga/dashboard?tahun=2026");
   };
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950 font-sans antialiased selection:bg-blue-600 selection:text-white">
-      {/* 1. NAVIGASI UTAMA (CLEAN VERSION) */}
+      {/* 1. NAVIGASI UTAMA */}
       <nav className="sticky top-0 z-50 flex items-center justify-between px-6 lg:px-12 py-4 bg-white/80 backdrop-blur-md border-b border-slate-200/60">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-blue-900 text-white flex items-center justify-center font-bold text-lg rounded-xl shadow-md shadow-blue-900/10">
@@ -47,7 +73,7 @@ export default function LandingPageDesa() {
           </div>
         </div>
 
-        {/* Link Navigasi Bersih Tanpa Duplikasi */}
+        {/* Link Navigasi Bersih */}
         <div className="hidden md:flex items-center gap-8 text-xs font-bold text-slate-700">
           <a href="#statistik" className="hover:text-blue-600 transition">
             Statistik Data
@@ -68,134 +94,179 @@ export default function LandingPageDesa() {
             href="/login"
             className="bg-[#0f172a] text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-slate-800 transition shadow-sm"
           >
-            Masuk Staff Portal
+            Login Pegawai
           </Link>
         </div>
       </nav>
 
-      {/* 2. HERO & WIDGET CEK STATUS MANDIRI */}
-      <header className="max-w-7xl mx-auto px-6 lg:px-12 pt-16 pb-20 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+      {/* 2. HERO & WIDGET LOGIN WARGA (COMPACT REVISION) */}
+      <header className="max-w-7xl mx-auto px-6 lg:px-12 pt-12 pb-16 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
         {/* Konten Kiri: Penjelasan & Headline */}
-        <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-800 rounded-full text-xs font-bold tracking-wide">
-            ✨ Akuntabilitas Program Perlindungan Sosial
+        <div className="lg:col-span-7 space-y-5 text-center lg:text-left">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-800 rounded-full text-xs font-bold tracking-wide border border-blue-100">
+            <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
+            Akuntabilitas Program Perlindungan Sosial
           </div>
-          <h2 className="text-4xl sm:text-5xl font-extrabold text-slate-950 tracking-tight leading-[1.15]">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-950 tracking-tight leading-[1.18]">
             Satu klik untuk <br />
             <span className="text-blue-600">
               keterbukaan data bantuan.
             </span>{" "}
             Periksa status Anda.
           </h2>
-          <p className="text-base text-slate-600 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-            Selamat datang di Portal Resmi Desa. Kami berkomitmen menyajikan
-            data kependudukan makro, realisasi pos anggaran APBDes, serta
-            transparansi penetapan bantuan secara berkala.
+          <p className="text-sm text-slate-600 max-w-xl mx-auto lg:mx-0 leading-relaxed">
+            Selamat datang di Portal Resmi Desa. Gunakan layanan mandiri di
+            samping untuk mengecek status Bansos, mengajukan sanggahan rumah,
+            atau perbaikan data.
           </p>
-          <div className="flex flex-wrap justify-center lg:justify-start gap-3 pt-2">
+          <div className="flex flex-wrap justify-center lg:justify-start gap-3 pt-1">
             <a
-              href="#cek-nik"
-              className="px-6 py-3 bg-blue-600 text-white text-sm font-bold rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-600/20"
+              href="#anggaran"
+              className="px-5 py-2.5 bg-blue-600 text-white text-xs font-bold rounded-xl hover:bg-blue-700 transition shadow-md shadow-blue-600/15"
             >
-              Periksa NIK Saya Mandiri
+              Cek Alokasi Dana APBDes
             </a>
             <Link
               href="/evaluasi"
-              className="px-6 py-3 bg-slate-900 text-white text-sm font-bold rounded-xl hover:bg-slate-800 transition shadow-md"
+              className="px-5 py-2.5 bg-slate-900 text-white text-xs font-bold rounded-xl hover:bg-slate-800 transition shadow-sm"
             >
               Lihat Hasil Evaluasi
             </Link>
           </div>
         </div>
 
-        {/* Konten Kanan: Widget Interaktif (Floating Card) */}
+        {/* Konten Kanan: WIDGET LOGIN WARGA COMPACT */}
         <div
-          id="cek-nik"
-          className="lg:col-span-5 relative w-full max-w-md mx-auto"
+          id="portal-warga"
+          className="lg:col-span-5 relative w-full max-w-sm mx-auto"
         >
-          <div className="absolute inset-0 bg-gradient-to-tr from-blue-400 to-indigo-300 rounded-3xl opacity-20 blur-2xl -z-10 transform scale-105"></div>
+          {/* Subtle Ambient Effect */}
+          <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/20 to-indigo-400/10 rounded-2xl blur-xl -z-10 transform scale-95"></div>
 
-          <div className="bg-white p-8 rounded-2xl border border-slate-200/80 shadow-xl shadow-slate-200/40">
-            <div className="mb-6">
-              <h3 className="text-lg font-bold text-slate-950">
-                Cek Status Bantuan Desa
-              </h3>
-              <p className="text-xs text-slate-500 mt-1">
-                Masukkan 16 digit Nomor Induk Kependudukan (NIK) resmi warga
-                terdaftar.
-              </p>
+          <div className="bg-white rounded-2xl border border-slate-200/90 shadow-lg shadow-slate-200/40 p-5 sm:p-6 space-y-4">
+            {/* Header Widget Compact */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-base">🪪</span>
+                <div>
+                  <h3 className="text-xs font-extrabold text-slate-950">
+                    Layanan Mandiri Warga
+                  </h3>
+                  <p className="text-[10px] text-slate-400">
+                    Masukan 16 Digit NIK KTP Anda
+                  </p>
+                </div>
+              </div>
+              <span className="text-[10px] font-extrabold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-100 font-mono">
+                2026
+              </span>
             </div>
 
-            <form onSubmit={handlePeriksa} className="space-y-4">
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                  Nomor Induk Kependudukan (NIK)
-                </label>
+            {/* Form Input NIK Compact */}
+            <form onSubmit={handlePeriksaNIK} className="space-y-3">
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-[10px]">
+                  <label className="font-bold text-slate-600 uppercase tracking-wider">
+                    Nomor NIK KTP
+                  </label>
+                  <span
+                    className={`font-mono font-bold ${
+                      nikInput.length === 16
+                        ? "text-emerald-600"
+                        : "text-slate-400"
+                    }`}
+                  >
+                    {nikInput.length}/16 Digit
+                  </span>
+                </div>
+
                 <input
                   type="text"
                   placeholder="Contoh: 3507011234560001"
                   value={nikInput}
-                  onChange={(e) => setNikInput(e.target.value)}
+                  onChange={(e) =>
+                    setNikInput(e.target.value.replace(/\D/g, ""))
+                  }
                   maxLength={16}
-                  className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm font-mono tracking-widest text-center focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder:font-sans placeholder:tracking-normal"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs font-mono font-extrabold tracking-wider text-slate-900 bg-slate-50/70 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600/20 transition placeholder:font-normal placeholder:tracking-normal placeholder:text-slate-400"
+                  required
                 />
               </div>
+
               <button
                 type="submit"
-                className="w-full py-3 bg-blue-600 text-white text-sm font-bold rounded-xl hover:bg-blue-700 transition shadow-md shadow-blue-600/10"
+                disabled={loading}
+                className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold rounded-xl transition shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
               >
-                Periksa Hak Kepesertaan
+                {loading ? (
+                  <span>Memeriksa Data...</span>
+                ) : (
+                  <>
+                    <span>Cek Status & Masuk</span>
+                    <span>→</span>
+                  </>
+                )}
               </button>
             </form>
 
-            {/* Panel Hasil Pengecekan */}
+            {/* Panel Hasil Pengecekan Compact */}
             {sudahDiperiksa && (
-              <div className="mt-6 pt-6 border-t border-dashed border-slate-200">
+              <div className="pt-2 border-t border-dashed border-slate-200 animate-in fade-in duration-200">
                 {hasilCek.terdaftar ? (
-                  <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-xl text-emerald-950">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 block">
-                      Warga Terdaftar Aktif
-                    </span>
-                    <h4 className="font-bold text-base mt-0.5">
-                      {hasilCek.nama}
-                    </h4>
-                    <div className="mt-3 text-xs space-y-1.5 text-emerald-800">
-                      <p>
-                        Status Ketetapan:{" "}
-                        <strong className="bg-emerald-200/60 px-1.5 py-0.5 rounded text-emerald-900">
-                          {hasilCek.status}
-                        </strong>
-                      </p>
-                      <p>
-                        Kategori Program: <strong>{hasilCek.bantuan}</strong>
-                      </p>
-                      <p className="text-[11px] font-mono text-emerald-700/80 pt-1 border-t border-emerald-200/40 mt-2">
-                        No SK: {hasilCek.noSk}
-                      </p>
+                  <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-xl text-emerald-950 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-extrabold text-emerald-700 uppercase">
+                        ✓ Terdaftar Aktif
+                      </span>
+                      <span className="text-[10px] font-mono text-emerald-800">
+                        {hasilCek.noSk}
+                      </span>
                     </div>
+
+                    <p className="font-bold text-xs text-slate-900">
+                      {hasilCek.nama}
+                    </p>
+                    <p className="text-[11px] text-emerald-800">
+                      {hasilCek.bantuan} ({hasilCek.status})
+                    </p>
+
+                    <button
+                      onClick={handleMasukDashboardWarga}
+                      className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition cursor-pointer"
+                    >
+                      Buka Dashboard Warga →
+                    </button>
                   </div>
                 ) : (
-                  <div className="bg-rose-50 border border-rose-100 p-4 rounded-xl">
-                    <p className="text-xs font-semibold text-rose-950 text-center">
-                      NIK tidak ditemukan pada daftar penerima bantuan sosial
-                      aktif desa saat ini.
+                  <div className="bg-amber-50 border border-amber-200 p-3 rounded-xl text-amber-950 space-y-2">
+                    <p className="text-[11px] font-bold">
+                      NIK tidak ada pada SK penerima bansos aktif.
                     </p>
-                    <div className="mt-3 pt-3 border-t border-rose-200/40 text-center">
-                      <button className="w-full py-2 bg-rose-600 text-white text-xs font-bold rounded-lg hover:bg-rose-700 transition">
-                        Ajukan Sanggahan Online
-                      </button>
-                    </div>
+                    <button
+                      onClick={handleMasukDashboardWarga}
+                      className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-lg transition cursor-pointer"
+                    >
+                      Masuk Layanan Sanggahan →
+                    </button>
                   </div>
                 )}
               </div>
             )}
+
+            {/* Mini Footer Feature Badges */}
+            <div className="pt-1 border-t border-slate-100 flex items-center justify-around text-[10px] font-semibold text-slate-500">
+              <span>🏠 Sanggah Rumah</span>
+              <span>•</span>
+              <span>📝 Koreksi NIK</span>
+              <span>•</span>
+              <span>🔒 Data Aman</span>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* 3. SECTION TUNGGAL INTEGRASI MID-PAGE (DENGAN NOTIFIKASI PENJELAS) */}
+      {/* 3. SECTION INTEGRASI MID-PAGE */}
       <section className="max-w-7xl mx-auto px-6 lg:px-12 pb-16">
-        {/* Teks Notifikasi / Informasi Konteks */}
         <div className="mb-4 p-4 rounded-2xl bg-amber-50/80 border border-amber-200/70 flex items-start gap-3 text-amber-900">
           <span className="text-base shrink-0">💡</span>
           <div className="text-xs leading-relaxed">
@@ -208,7 +279,6 @@ export default function LandingPageDesa() {
           </div>
         </div>
 
-        {/* Card Bridge Siskeudes & Dukcapil */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <Link
             href="/siskeudes"
