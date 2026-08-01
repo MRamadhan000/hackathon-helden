@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import RTHeader from "@/components/rt/RTHeader";
 
-export default function DashboardRT() {
+// KOMPONEN UTAMA DENGAN LOGIKA useSearchParams
+function DashboardRTContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -149,5 +150,20 @@ export default function DashboardRT() {
         </div>
       </main>
     </div>
+  );
+}
+
+// EXPORT DEFAULT UTAMA DENGAN SUSPENSE BOUNDARY
+export default function DashboardRT() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-slate-50 p-10 text-center text-xs text-slate-400">
+          Memuat Panel Utama RT...
+        </div>
+      }
+    >
+      <DashboardRTContent />
+    </Suspense>
   );
 }
