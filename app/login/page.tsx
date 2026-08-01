@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 // HARDCODE CREDENTIALS & ROLE MAPPING
 const MOCK_PEGAWAI_ACCOUNTS = [
@@ -56,7 +57,16 @@ export default function LoginPegawai() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans relative">
+      {/* TOMBOL PANAH KEMBALI KE DASHBOARD UTAMA */}
+      <Link
+        href="/"
+        className="absolute top-6 left-6 inline-flex items-center gap-2 px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100 transition shadow-2xs"
+      >
+        <span>←</span>
+        <span>Kembali ke Dashboard Utama</span>
+      </Link>
+
       <div className="max-w-sm w-full space-y-6">
         <form
           onSubmit={handleLoginSubmit}
@@ -108,7 +118,7 @@ export default function LoginPegawai() {
 
           <button
             type="submit"
-            className="w-full bg-slate-900 text-white font-bold py-3 rounded-xl text-xs hover:bg-slate-800 transition shadow-2xs"
+            className="w-full bg-slate-900 text-white font-bold py-3 rounded-xl text-xs hover:bg-slate-800 transition shadow-2xs cursor-pointer"
           >
             Masuk ke Sistem Perangkat →
           </button>

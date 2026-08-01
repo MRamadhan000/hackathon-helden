@@ -4,7 +4,34 @@ import React, { useState } from "react";
 import { PendudukRT } from "./TableWarga";
 import SearchableNikSelect from "./SearchableNikSelect";
 
+// Mock Data Riwayat Hasil Survei Kelayakan Tahun Berlalu
+const mockRiwayatSurveiPerTahun: Record<string, any[]> = {
+  "2025": [
+    {
+      id: "s-1",
+      tanggal: "15/05/2025",
+      nik: "3507019876540002",
+      nama: "Siti Aminah",
+      skor: 70,
+      kategori: "Sangat Layak (Prioritas SK)",
+      indikator: "Lantai Tanah, Dinding Bambu, Ada Lansia",
+    },
+  ],
+  "2024": [
+    {
+      id: "s-2",
+      tanggal: "04/10/2024",
+      nik: "3507015554440003",
+      nama: "Joko Widodo",
+      skor: 85,
+      kategori: "Sangat Layak (Prioritas SK)",
+      indikator: "Sungai, Buruh Harian, Tidak Ada Jamban",
+    },
+  ],
+};
+
 interface FormSurveiKelayakanProps {
+  tahunPeriode: string;
   daftarWarga: PendudukRT[];
   selectedNik: string;
   setSelectedNik: (nik: string) => void;
@@ -12,24 +39,26 @@ interface FormSurveiKelayakanProps {
 }
 
 export default function FormSurveiKelayakan({
+  tahunPeriode,
   daftarWarga,
   selectedNik,
   setSelectedNik,
   onSubmitSurvei,
 }: FormSurveiKelayakanProps) {
+  const isTahunBerlalu = tahunPeriode !== "2026";
+  const riwayatSurvei = mockRiwayatSurveiPerTahun[tahunPeriode] || [];
+
   const wargaTerpilih = daftarWarga.find((w) => w.nik === selectedNik);
 
-  // State Indikator Prodeskel DDK
   const [indikator, setIndikator] = useState({
-    jenisLantai: "Semen / Keramik", // Semen/Keramik (0 pt) vs Tanah (25 pt)
-    jenisDinding: "Tembok / Kayu Bagus", // Tembok (0 pt) vs Bambu/Papan Rendah (25 pt)
-    sumberAir: "Perumda / Sumur Terlindung", // Baik (0 pt) vs Sungai/Tak Terlindung (20 pt)
-    sanitasi: "Jamban Pribadi", // Pribadi (0 pt) vs Mandi Umum/Tidak Ada (15 pt)
-    pekerjaan: "Tetap / Wiraswasta", // Tetap (0 pt) vs Buruh Harian / Non-Tetap (15 pt)
-    tanggunganRentan: false, // Ada Lansia / Disabilitas (+10 pt)
+    jenisLantai: "Semen / Keramik",
+    jenisDinding: "Tembok / Kayu Bagus",
+    sumberAir: "Perumda / Sumur Terlindung",
+    sanitasi: "Jamban Pribadi",
+    pekerjaan: "Tetap / Wiraswasta",
+    tanggunganRentan: false,
   });
 
-  // Hitung Skor Kelayakan Prodeskel Otomatis (0 - 100)
   const hitungSkor = () => {
     let skor = 0;
     if (indikator.jenisLantai === "Tanah / Plester Rusak") skor += 25;
@@ -54,14 +83,96 @@ export default function FormSurveiKelayakan({
     });
   };
 
+  // TAMPILAN JIKA TAHUN BERLALU (MODE HISTORIS REKAP SURVEI)
+  if (isTahunBerlalu) {
+    return (
+      <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-50 text-amber-800 rounded-full text-xs font-bold mb-1">
+              🔒 Mode Arsip Data ({tahunPeriode})
+            </div>
+            <h3 className="text-base font-bold text-slate-950">
+              Hasil Survei Kelayakan Bansos Prodeskel Tahun {tahunPeriode}
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Rekapitulasi nilai indikator Prodeskel DDK yang telah dikirim ke
+              Sekdes pada tahun ini.
+            </p>
+          </div>
+          <span className="px-3 py-1.5 bg-slate-100 text-slate-700 text-xs font-bold rounded-xl border border-slate-200">
+            Total Survei: {riwayatSurvei.length} Keluarga
+          </span>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm border-collapse">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200/80 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                <th className="px-5 py-3">Tgl Survei</th>
+                <th className="px-5 py-3">Nama Warga (NIK)</th>
+                <th className="px-5 py-3">Ringkasan Indikator Prodeskel</th>
+                <th className="px-5 py-3">Total Skor</th>
+                <th className="px-5 py-3 text-right">Rekomendasi Akhir</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
+              {riwayatSurvei.length > 0 ? (
+                riwayatSurvei.map((item) => (
+                  <tr key={item.id} className="hover:bg-slate-50/60 transition">
+                    <td className="px-5 py-3.5 text-xs text-slate-500 font-mono">
+                      {item.tanggal}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <p className="font-bold text-slate-900 text-xs">
+                        {item.nama}
+                      </p>
+                      <p className="font-mono text-[11px] text-slate-400">
+                        NIK: {item.nik}
+                      </p>
+                    </td>
+                    <td className="px-5 py-3.5 text-xs text-slate-600">
+                      {item.indikator}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <span className="px-2.5 py-1 bg-emerald-100 text-emerald-900 font-extrabold text-xs rounded-lg">
+                        {item.skor} / 100
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5 text-right">
+                      <span className="px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-xs font-bold">
+                        {item.kategori}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="p-8 text-center text-slate-400 text-xs"
+                  >
+                    Tidak ada riwayat survei kelayakan bansos pada tahun{" "}
+                    {tahunPeriode}.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
+
+  // TAMPILAN JIKA TAHUN AKTIF (2026) - FORM SURVEI
   return (
     <div className="bg-white p-8 rounded-2xl border border-slate-200/80 max-w-2xl mx-auto shadow-sm space-y-6">
       <div>
         <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-800 rounded-full text-xs font-bold mb-2">
-          📋 Indikator Profil Desa (Prodeskel DDK)
+          📋 Indikator Profil Desa (Prodeskel DDK 2026)
         </div>
         <h3 className="text-base font-bold text-slate-950">
-          Survei Kelayakan Kelayakan Bansos (Tingkat RT)
+          Survei Kelayakan Bansos (Tingkat RT)
         </h3>
         <p className="text-xs text-slate-500 mt-1 leading-relaxed">
           Kuesioner berbasis indikator Data Dasar Keluarga (DDK) Prodeskel
@@ -70,7 +181,6 @@ export default function FormSurveiKelayakan({
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* 1. SELEKSI WARGA */}
         <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/60 space-y-3">
           <div>
             <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
@@ -98,14 +208,12 @@ export default function FormSurveiKelayakan({
           </div>
         </div>
 
-        {/* 2. INDIKATOR BANGUNAN & HUNIAN (PRODESKEL) */}
         <div className="space-y-4">
           <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2">
             1. Kondisi Fisik Rumah & Sanitasi
           </h4>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-            {/* Lantai */}
             <div>
               <label className="block font-semibold text-slate-700 mb-1">
                 Bahan Lantai Utama
@@ -124,7 +232,6 @@ export default function FormSurveiKelayakan({
               </select>
             </div>
 
-            {/* Dinding */}
             <div>
               <label className="block font-semibold text-slate-700 mb-1">
                 Bahan Dinding Utama
@@ -143,7 +250,6 @@ export default function FormSurveiKelayakan({
               </select>
             </div>
 
-            {/* Sumber Air */}
             <div>
               <label className="block font-semibold text-slate-700 mb-1">
                 Sumber Air Minum Utama
@@ -164,7 +270,6 @@ export default function FormSurveiKelayakan({
               </select>
             </div>
 
-            {/* Sanitasi */}
             <div>
               <label className="block font-semibold text-slate-700 mb-1">
                 Fasilitas BAB / Sanitasi
@@ -185,7 +290,6 @@ export default function FormSurveiKelayakan({
           </div>
         </div>
 
-        {/* 3. INDIKATOR EKONOMI & SOSIAL */}
         <div className="space-y-4">
           <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2">
             2. Kondisi Mata Pencaharian & Rentan
@@ -231,7 +335,6 @@ export default function FormSurveiKelayakan({
           </div>
         </div>
 
-        {/* SKOR INDIKATOR OTOMATIS */}
         <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-xl flex items-center justify-between">
           <div>
             <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">
@@ -252,7 +355,6 @@ export default function FormSurveiKelayakan({
           </span>
         </div>
 
-        {/* SUBMIT */}
         <button
           type="submit"
           disabled={!selectedNik}
