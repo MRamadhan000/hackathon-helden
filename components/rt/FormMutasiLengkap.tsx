@@ -190,7 +190,7 @@ export default function FormMutasiLengkap({
     <div className="bg-white p-8 rounded-2xl border border-slate-200/80 max-w-2xl mx-auto shadow-sm space-y-6">
       <div>
         <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-800 rounded-full text-xs font-bold mb-2">
-          📋 Master Pendataan & Pembaruan Data RT (2026)
+          📋 Master Pendataan & Pembaruan Data RT ({tahunPeriode})
         </div>
         <h3 className="text-base font-bold text-slate-950">
           Formulir Mutasi & Pemutakhiran Data Kependudukan
@@ -201,6 +201,7 @@ export default function FormMutasiLengkap({
         </p>
       </div>
 
+      {/* KARTU PILIHAN KATEGORI TINKADAN */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <button
           type="button"
@@ -265,6 +266,22 @@ export default function FormMutasiLengkap({
         </button>
       </div>
 
+      {/* BANNER INFORMASI KHUSUS UNTUK KOREKSI DATA */}
+      {subAksi === "koreksi" && (
+        <div className="p-4 bg-blue-50/80 border border-blue-200 rounded-xl flex items-start gap-3 text-blue-950 text-xs">
+          <span className="text-base leading-none">💡</span>
+          <div className="space-y-0.5">
+            <p className="font-extrabold">Petunjuk Koreksi Data:</p>
+            <p className="text-blue-900 leading-relaxed font-medium">
+              Silakan <strong>ubah hanya field/isian yang salah saja</strong>{" "}
+              (misal: ejaan nama atau tanggal lahir). Field lain yang sudah
+              benar <strong>tidak akan berubah</strong> dan tetap menggunakan
+              data awal.
+            </p>
+          </div>
+        </div>
+      )}
+
       <form
         onSubmit={handleSubmit}
         className="space-y-5 pt-2 border-t border-slate-100"
@@ -285,6 +302,7 @@ export default function FormMutasiLengkap({
 
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* NIK */}
             <div>
               <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
                 NIK Warga (16 Digit) *
@@ -299,10 +317,11 @@ export default function FormMutasiLengkap({
                 onChange={(e) =>
                   setFormDetail({ ...formDetail, nik: e.target.value })
                 }
-                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs font-mono font-bold focus:outline-none focus:border-blue-500 disabled:bg-slate-100"
+                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 bg-white focus:outline-none focus:border-blue-500 disabled:bg-slate-100 disabled:text-slate-400"
               />
             </div>
 
+            {/* Nama Lengkap */}
             <div>
               <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
                 Nama Lengkap Warga *
@@ -316,12 +335,13 @@ export default function FormMutasiLengkap({
                 onChange={(e) =>
                   setFormDetail({ ...formDetail, nama: e.target.value })
                 }
-                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-blue-500 disabled:bg-slate-100"
+                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 bg-white focus:outline-none focus:border-blue-500 disabled:bg-slate-100 disabled:text-slate-400"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Jenis Kelamin */}
             <div>
               <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
                 Jenis Kelamin *
@@ -335,13 +355,14 @@ export default function FormMutasiLengkap({
                     jenisKelamin: e.target.value as "L" | "P",
                   })
                 }
-                className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-xs font-semibold bg-white disabled:bg-slate-100"
+                className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 bg-white focus:outline-none focus:border-blue-500 disabled:bg-slate-100 disabled:text-slate-400"
               >
                 <option value="L">Laki-Laki (L)</option>
                 <option value="P">Perempuan (P)</option>
               </select>
             </div>
 
+            {/* Tempat Lahir */}
             <div>
               <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
                 Tempat Lahir *
@@ -352,7 +373,7 @@ export default function FormMutasiLengkap({
                 onChange={(e) =>
                   setFormDetail({ ...formDetail, tempatLahir: e.target.value })
                 }
-                className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-xs font-semibold bg-white disabled:bg-slate-100 cursor-pointer"
+                className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 bg-white focus:outline-none focus:border-blue-500 disabled:bg-slate-100 disabled:text-slate-400 cursor-pointer"
               >
                 {DAFTAR_KOTA_LAHIR.map((kota, idx) => (
                   <option key={idx} value={kota}>
@@ -362,6 +383,7 @@ export default function FormMutasiLengkap({
               </select>
             </div>
 
+            {/* Tanggal Lahir */}
             <div>
               <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
                 Tanggal Lahir *
@@ -374,7 +396,7 @@ export default function FormMutasiLengkap({
                 onChange={(e) =>
                   setFormDetail({ ...formDetail, tanggalLahir: e.target.value })
                 }
-                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-blue-500 disabled:bg-slate-100"
+                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 bg-white focus:outline-none focus:border-blue-500 disabled:bg-slate-100 disabled:text-slate-400"
               />
             </div>
           </div>

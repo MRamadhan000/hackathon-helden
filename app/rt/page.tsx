@@ -1,277 +1,152 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
 import RTHeader from "@/components/rt/RTHeader";
-import ActionGrid from "@/components/rt/ActionGrid";
-import TableWarga, { PendudukRT } from "@/components/rt/TableWarga";
-import CardSanggahan, {
-  SanggahanDataPenduduk,
-  SanggahanKondisiRumah,
-} from "@/components/rt/CardSanggahan";
-import FormMutasiLengkap from "@/components/rt/FormMutasiLengkap";
-import FormSurveiKelayakan from "@/components/rt/FormSurveiKelayakan";
-
-// Mock Data Warga Per Tahun
-const mockWargaPerTahun: Record<string, PendudukRT[]> = {
-  "2026": [
-    {
-      id: "uuid-001",
-      nik: "3507011234560001",
-      nama: "Budi Santoso",
-      jenisKelamin: "L",
-      tempatLahir: "Kab. Malang",
-      tanggalLahir: "1985-05-12",
-      statusPenduduk: "Tetap",
-      statusVerifikasiDukcapil: "Terverifikasi",
-      terakhirDiperbarui: "2025-11-10",
-    },
-    {
-      id: "uuid-002",
-      nik: "3507019876540002",
-      nama: "Siti Aminah",
-      jenisKelamin: "P",
-      tempatLahir: "Kota Surabaya",
-      tanggalLahir: "1958-08-24",
-      statusPenduduk: "Tetap",
-      statusVerifikasiDukcapil: "Terverifikasi",
-      terakhirDiperbarui: "2023-04-15",
-    },
-    {
-      id: "uuid-003",
-      nik: "3507015554440003",
-      nama: "Joko Widodo (Alm)",
-      jenisKelamin: "L",
-      tempatLahir: "Kab. Blitar",
-      tanggalLahir: "1945-01-15",
-      statusPenduduk: "Meninggal",
-      statusVerifikasiDukcapil: "Anomali / Unverified",
-      terakhirDiperbarui: "2026-01-20",
-    },
-  ],
-  "2025": [
-    {
-      id: "uuid-001",
-      nik: "3507011234560001",
-      nama: "Budi Santoso",
-      jenisKelamin: "L",
-      tempatLahir: "Kab. Malang",
-      tanggalLahir: "1985-05-12",
-      statusPenduduk: "Tetap",
-      statusVerifikasiDukcapil: "Terverifikasi",
-      terakhirDiperbarui: "2025-02-10",
-    },
-    {
-      id: "uuid-002",
-      nik: "3507019876540002",
-      nama: "Siti Aminah",
-      jenisKelamin: "P",
-      tempatLahir: "Kota Surabaya",
-      tanggalLahir: "1958-08-24",
-      statusPenduduk: "Tetap",
-      statusVerifikasiDukcapil: "Terverifikasi",
-      terakhirDiperbarui: "2023-04-15",
-    },
-  ],
-  "2024": [
-    {
-      id: "uuid-001",
-      nik: "3507011234560001",
-      nama: "Budi Santoso",
-      jenisKelamin: "L",
-      tempatLahir: "Kab. Malang",
-      tanggalLahir: "1985-05-12",
-      statusPenduduk: "Tetap",
-      statusVerifikasiDukcapil: "Terverifikasi",
-      terakhirDiperbarui: "2024-01-11",
-    },
-  ],
-};
-
-const mockSanggahanPendudukPerTahun: Record<string, SanggahanDataPenduduk[]> = {
-  "2026": [
-    {
-      id: "sp-2026-1",
-      namaPelapor: "Siti Aminah",
-      nikPelapor: "3507019876540002",
-      jenisKetidakcocokan: "Ejaan Nama / NIK Typo",
-      alasanSanggahan:
-        "Ejaan nama di KTP terdaftar Siti Aminah, S.Pd tetapi di data desa belum ada gelar.",
-      tanggalMasuk: "01/08/2026",
-      status: "Pending",
-    },
-  ],
-  "2025": [
-    {
-      id: "sp-2025-1",
-      namaPelapor: "Budi Santoso",
-      nikPelapor: "3507011234560001",
-      jenisKetidakcocokan: "Status Domisili",
-      alasanSanggahan: "Perbaikan nomor rumah RT 03 / RW 01.",
-      tanggalMasuk: "14/05/2025",
-      status: "Diajukan ke Sekdes",
-    },
-  ],
-  "2024": [
-    {
-      id: "sp-2024-1",
-      namaPelapor: "Joko Widodo",
-      nikPelapor: "3507015554440003",
-      jenisKetidakcocokan: "Ejaan Nama / NIK Typo",
-      alasanSanggahan: "Koreksi NIK digit terakhir.",
-      tanggalMasuk: "10/09/2024",
-      status: "Tidak Diajukan",
-    },
-  ],
-};
-
-const mockSanggahanRumahPerTahun: Record<string, SanggahanKondisiRumah[]> = {
-  "2026": [
-    {
-      id: "sr-2026-1",
-      namaPelapor: "Ahmad Subari",
-      nikPelapor: "3507010202020003",
-      jenisLantai: "Tanah / Plester Rusak",
-      jenisDinding: "Bambu / Kayu Lapuk",
-      sanitasi: "Numpang / Tidak Ada Jamban",
-      skorSistem: 75,
-      alasanWarga:
-        "Kondisi dinding rumah lapuk dan belum punya jamban pribadi, mohon diusulkan BLT.",
-      tanggalMasuk: "31/07/2026",
-      status: "Pending",
-    },
-  ],
-  "2025": [
-    {
-      id: "sr-2025-1",
-      namaPelapor: "Siti Aminah",
-      nikPelapor: "3507019876540002",
-      jenisLantai: "Semen / Keramik",
-      jenisDinding: "Tembok / Kayu Bagus",
-      sanitasi: "Jamban Pribadi",
-      skorSistem: 20,
-      alasanWarga: "Pengusulan PKH Lansia.",
-      tanggalMasuk: "02/03/2025",
-      status: "Diajukan ke Sekdes",
-    },
-  ],
-  "2024": [],
-};
 
 export default function DashboardRT() {
-  const [tahunPeriode, setTahunPeriode] = useState("2026");
-  const [activeMode, setActiveMode] = useState<
-    "warga" | "kependudukan" | "kelayakan" | "sanggahan"
-  >("warga");
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
-  const [selectedNik, setSelectedNik] = useState("");
-  const [notif, setNotif] = useState("");
+  // Inisialisasi state tahun dari URL params atau LocalStorage (Default: 2026)
+  const [tahunPeriode, setTahunPeriodeState] = useState("2026");
 
-  const dataWargaAktif = mockWargaPerTahun[tahunPeriode] || [];
-  const sanggahanPendudukAktif =
-    mockSanggahanPendudukPerTahun[tahunPeriode] || [];
-  const sanggahanRumahAktif = mockSanggahanRumahPerTahun[tahunPeriode] || [];
-
-  const handleSelectAction = (
-    mode: "warga" | "kependudukan" | "kelayakan" | "sanggahan",
-  ) => {
-    setActiveMode(mode);
-    setSelectedNik("");
-  };
-
-  const handleAjukanPendudukKeSekdes = (id: string) => {
-    if (tahunPeriode !== "2026") return;
-    setNotif(
-      "Sukses: Sanggahan data kependudukan berhasil divalidasi RT dan dikirimkan ke Sekretaris Desa.",
-    );
-    setTimeout(() => setNotif(""), 4000);
-  };
-
-  const handleAjukanRumahKeSekdes = (id: string) => {
-    if (tahunPeriode !== "2026") return;
-    setNotif(
-      "Sukses: Hasil survei ulang kondisi rumah berhasil diteruskan ke Sekretaris Desa.",
-    );
-    setTimeout(() => setNotif(""), 4000);
-  };
-
-  const handleMutasiLengkap = (e: React.FormEvent, dataHasil: any) => {
-    e.preventDefault();
-    if (tahunPeriode !== "2026") return;
-    const { kategoriAksi, dataForm } = dataHasil;
-
-    let pesan = "";
-    if (kategoriAksi === "baru") {
-      pesan = `Sukses: Pendaftaran Warga Baru (${dataForm.nama}) telah dikirim ke Sekretaris Desa.`;
-    } else if (kategoriAksi === "nonaktif") {
-      pesan = `Sukses: Laporan Non-Aktifkan Warga (${dataForm.nama} - Alasan: ${dataForm.alasanNonAktif}) telah dikirim ke Sekretaris Desa.`;
+  useEffect(() => {
+    // 1. Cek dari URL Query dahulu
+    const queryTahun = searchParams.get("tahun");
+    if (queryTahun) {
+      setTahunPeriodeState(queryTahun);
+      localStorage.setItem("rt_tahun_periode", queryTahun);
     } else {
-      pesan = `Sukses: Usulan Koreksi Data Warga (${dataForm.nama}) telah dikirim ke Sekretaris Desa.`;
+      // 2. Jika URL tidak ada query, cek dari LocalStorage
+      const savedTahun = localStorage.getItem("rt_tahun_periode");
+      if (savedTahun) {
+        setTahunPeriodeState(savedTahun);
+      }
     }
+  }, [searchParams]);
 
-    setNotif(pesan);
-    setSelectedNik("");
-    setTimeout(() => setNotif(""), 4000);
+  // Handler Ganti Tahun: Simpan ke LocalStorage dan Update Query URL
+  const setTahunPeriode = (tahun: string) => {
+    setTahunPeriodeState(tahun);
+    localStorage.setItem("rt_tahun_periode", tahun);
+    router.replace(`/rt?tahun=${tahun}`);
   };
 
-  const handleSubmitSurvei = (e: React.FormEvent, dataHasil: any) => {
-    e.preventDefault();
-    if (tahunPeriode !== "2026") return;
-    setNotif(
-      `Sukses: Hasil Survei Prodeskel atas nama ${dataHasil.nama} (${dataHasil.nik}) dengan Skor ${dataHasil.skor} Poin [${dataHasil.kategori}] berhasil diteruskan ke Sekretaris Desa.`,
-    );
-    setSelectedNik("");
-    setTimeout(() => setNotif(""), 4000);
-  };
+  // Kartu Navigasi Utama dengan Query Parameter Tahun Konsisten
+  const menuCards = [
+    {
+      id: "warga",
+      title: "Master Data Warga",
+      tag: "MASTER DATA WARGA",
+      desc: "Lihat dan kelola master data identitas serta status keberadaan warga di lingkungan RT 03.",
+      icon: "👥",
+      badgeColor: "bg-blue-100 text-blue-800 border-blue-200",
+      href: `/rt/warga?tahun=${tahunPeriode}`,
+      countText: "Data Terintegrasi",
+    },
+    {
+      id: "mutasi",
+      title: "Pendataan & Mutasi Warga",
+      tag: "PEMBARUAN DATA",
+      desc: "Kumpulkan data warga baru, perubahan domisili pindah, atau pembaruan status kematian.",
+      icon: "📋",
+      badgeColor: "bg-indigo-100 text-indigo-800 border-indigo-200",
+      href: `/rt/mutasi?tahun=${tahunPeriode}`,
+      countText: "Form & Riwayat Laporan",
+    },
+    {
+      id: "kelayakan",
+      title: "Pengumpulan Data Kelayakan Bansos",
+      tag: "VERIFIKASI LAPANGAN",
+      desc: "Survei kriteria Prodeskel DDK warga kurang mampu untuk diusulkan masuk alokasi Bansos SK Baru.",
+      icon: "🤝",
+      badgeColor: "bg-emerald-100 text-emerald-800 border-emerald-200",
+      href: `/rt/kelayakan?tahun=${tahunPeriode}`,
+      countText: "Indikator Prodeskel DDK",
+    },
+    {
+      id: "sanggahan",
+      title: "Kelola Sanggahan Warga",
+      tag: "SANGGAHAN MASUK",
+      desc: "Respon dan tindak lanjuti sanggahan warga terkait ketidakcocokan data kependudukan maupun kondisi rumah.",
+      icon: "⚠️",
+      badgeColor: "bg-amber-100 text-amber-800 border-amber-200",
+      href: `/rt/sanggahan?tahun=${tahunPeriode}`,
+      countText: "Alur Berjenjang RT -> Sekdes",
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950 font-sans antialiased">
+      {/* HEADER UTAMA PANEL RT */}
       <RTHeader tahunPeriode={tahunPeriode} setTahunPeriode={setTahunPeriode} />
 
-      <main className="max-w-7xl mx-auto px-6 lg:px-12 py-8 space-y-8">
-        {notif && (
-          <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-950 rounded-xl text-sm font-semibold transition shadow-sm">
-            {notif}
+      <main className="max-w-7xl mx-auto px-6 lg:px-12 py-10 space-y-8">
+        {/* BANNER SELAMAT DATANG */}
+        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <h2 className="text-lg sm:text-xl font-extrabold text-slate-950">
+              Selamat Datang di Panel Kerja RT 03 / RW 01 👋
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-500 max-w-2xl">
+              Silahkan pilih salah satu kartu fitur di bawah ini untuk mengelola
+              data warga, memproses mutasi, melakukan survei kelayakan bansos,
+              atau menindaklanjuti sanggahan.
+            </p>
           </div>
-        )}
+          <div className="px-4 py-2 bg-blue-50 border border-blue-200/80 rounded-xl shrink-0 self-start sm:self-auto">
+            <span className="text-[10px] font-bold text-blue-700 uppercase tracking-wider block">
+              Status Operasional
+            </span>
+            <span className="text-xs font-black text-blue-950">
+              Periode Aktif {tahunPeriode}
+            </span>
+          </div>
+        </div>
 
-        <ActionGrid
-          onSelectAction={handleSelectAction}
-          activeMode={activeMode}
-        />
+        {/* GRID KARTU NAVIGASI UTAMA */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {menuCards.map((card) => (
+            <Link
+              key={card.id}
+              href={card.href}
+              className="group bg-white p-7 rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md hover:border-blue-500/50 transition-all duration-200 flex flex-col justify-between space-y-6 relative overflow-hidden"
+            >
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span
+                    className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${card.badgeColor}`}
+                  >
+                    {card.tag}
+                  </span>
+                  <span className="text-2xl group-hover:scale-110 transition-transform duration-200">
+                    {card.icon}
+                  </span>
+                </div>
 
-        <section className="pt-2">
-          {activeMode === "warga" && <TableWarga data={dataWargaAktif} />}
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+                    {card.title}
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                    {card.desc}
+                  </p>
+                </div>
+              </div>
 
-          {activeMode === "kependudukan" && (
-            <FormMutasiLengkap
-              tahunPeriode={tahunPeriode}
-              daftarWarga={dataWargaAktif}
-              selectedNik={selectedNik}
-              setSelectedNik={setSelectedNik}
-              onSubmitMutasi={handleMutasiLengkap}
-            />
-          )}
-
-          {activeMode === "kelayakan" && (
-            <FormSurveiKelayakan
-              tahunPeriode={tahunPeriode}
-              daftarWarga={dataWargaAktif}
-              selectedNik={selectedNik}
-              setSelectedNik={setSelectedNik}
-              onSubmitSurvei={handleSubmitSurvei}
-            />
-          )}
-
-          {activeMode === "sanggahan" && (
-            <CardSanggahan
-              tahunPeriode={tahunPeriode}
-              sanggahanPendudukList={sanggahanPendudukAktif}
-              sanggahanRumahList={sanggahanRumahAktif}
-              onAjukanPendudukKeSekdes={handleAjukanPendudukKeSekdes}
-              onAjukanRumahKeSekdes={handleAjukanRumahKeSekdes}
-            />
-          )}
-        </section>
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-blue-600">
+                <span className="text-slate-400 font-medium">
+                  {card.countText}
+                </span>
+                <span className="inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                  Buka Halaman Fitur →
+                </span>
+              </div>
+            </Link>
+          ))}
+        </div>
       </main>
     </div>
   );

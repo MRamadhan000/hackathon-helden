@@ -169,7 +169,7 @@ export default function FormSurveiKelayakan({
     <div className="bg-white p-8 rounded-2xl border border-slate-200/80 max-w-2xl mx-auto shadow-sm space-y-6">
       <div>
         <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-800 rounded-full text-xs font-bold mb-2">
-          📋 Indikator Profil Desa (Prodeskel DDK 2026)
+          📋 Indikator Profil Desa (Prodeskel DDK {tahunPeriode})
         </div>
         <h3 className="text-base font-bold text-slate-950">
           Survei Kelayakan Bansos (Tingkat RT)
@@ -181,9 +181,9 @@ export default function FormSurveiKelayakan({
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/60 space-y-3">
+        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
           <div>
-            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
               Cari / Pilih NIK Warga Terdaftar *
             </label>
             <SearchableNikSelect
@@ -194,7 +194,7 @@ export default function FormSurveiKelayakan({
           </div>
 
           <div>
-            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
               Nama Kepala / Anggota Keluarga
             </label>
             <input
@@ -203,7 +203,7 @@ export default function FormSurveiKelayakan({
               disabled
               value={wargaTerpilih ? wargaTerpilih.nama : ""}
               placeholder="Pilih NIK di atas..."
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 cursor-not-allowed"
+              className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 cursor-not-allowed"
             />
           </div>
         </div>
@@ -215,7 +215,7 @@ export default function FormSurveiKelayakan({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
-              <label className="block font-semibold text-slate-700 mb-1">
+              <label className="block font-bold text-slate-700 mb-1">
                 Bahan Lantai Utama
               </label>
               <select
@@ -223,7 +223,7 @@ export default function FormSurveiKelayakan({
                 onChange={(e) =>
                   setIndikator({ ...indikator, jenisLantai: e.target.value })
                 }
-                className="w-full p-2.5 border border-slate-200 rounded-xl bg-white font-medium"
+                className="w-full p-3 border border-slate-300 rounded-xl bg-white font-bold text-slate-900 focus:outline-none focus:border-blue-500"
               >
                 <option value="Semen / Keramik">Semen / Keramik / Ubin</option>
                 <option value="Tanah / Plester Rusak">
@@ -233,7 +233,7 @@ export default function FormSurveiKelayakan({
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-700 mb-1">
+              <label className="block font-bold text-slate-700 mb-1">
                 Bahan Dinding Utama
               </label>
               <select
@@ -241,7 +241,7 @@ export default function FormSurveiKelayakan({
                 onChange={(e) =>
                   setIndikator({ ...indikator, jenisDinding: e.target.value })
                 }
-                className="w-full p-2.5 border border-slate-200 rounded-xl bg-white font-medium"
+                className="w-full p-3 border border-slate-300 rounded-xl bg-white font-bold text-slate-900 focus:outline-none focus:border-blue-500"
               >
                 <option value="Tembok / Kayu Bagus">Tembok / Kayu Bagus</option>
                 <option value="Bambu / Kayu Lapuk">
@@ -251,7 +251,7 @@ export default function FormSurveiKelayakan({
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-700 mb-1">
+              <label className="block font-bold text-slate-700 mb-1">
                 Sumber Air Minum Utama
               </label>
               <select
@@ -259,7 +259,7 @@ export default function FormSurveiKelayakan({
                 onChange={(e) =>
                   setIndikator({ ...indikator, sumberAir: e.target.value })
                 }
-                className="w-full p-2.5 border border-slate-200 rounded-xl bg-white font-medium"
+                className="w-full p-3 border border-slate-300 rounded-xl bg-white font-bold text-slate-900 focus:outline-none focus:border-blue-500"
               >
                 <option value="Perumda / Sumur Terlindung">
                   Perumda / Sumur Terlindung
@@ -271,7 +271,7 @@ export default function FormSurveiKelayakan({
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-700 mb-1">
+              <label className="block font-bold text-slate-700 mb-1">
                 Fasilitas BAB / Sanitasi
               </label>
               <select
@@ -279,7 +279,7 @@ export default function FormSurveiKelayakan({
                 onChange={(e) =>
                   setIndikator({ ...indikator, sanitasi: e.target.value })
                 }
-                className="w-full p-2.5 border border-slate-200 rounded-xl bg-white font-medium"
+                className="w-full p-3 border border-slate-300 rounded-xl bg-white font-bold text-slate-900 focus:outline-none focus:border-blue-500"
               >
                 <option value="Jamban Pribadi">Jamban Pribadi (Sehat)</option>
                 <option value="Numpang / Tidak Ada Jamban">
@@ -297,7 +297,7 @@ export default function FormSurveiKelayakan({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
-              <label className="block font-semibold text-slate-700 mb-1">
+              <label className="block font-bold text-slate-700 mb-1">
                 Mata Pencaharian Utama
               </label>
               <select
@@ -305,7 +305,7 @@ export default function FormSurveiKelayakan({
                 onChange={(e) =>
                   setIndikator({ ...indikator, pekerjaan: e.target.value })
                 }
-                className="w-full p-2.5 border border-slate-200 rounded-xl bg-white font-medium"
+                className="w-full p-3 border border-slate-300 rounded-xl bg-white font-bold text-slate-900 focus:outline-none focus:border-blue-500"
               >
                 <option value="Tetap / Wiraswasta">
                   Pekerja Tetap / Usaha
@@ -317,7 +317,7 @@ export default function FormSurveiKelayakan({
             </div>
 
             <div className="flex items-center pt-5">
-              <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700">
+              <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-800">
                 <input
                   type="checkbox"
                   checked={indikator.tanggunganRentan}
