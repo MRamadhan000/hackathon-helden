@@ -29,7 +29,6 @@ export default function LandingPageDesa() {
     setSudahDiperiksa(true);
   };
 
-export default function HomePage() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950 font-sans antialiased selection:bg-blue-600 selection:text-white">
       {/* 1. NAVIGASI UTAMA (CLEAN VERSION) */}
