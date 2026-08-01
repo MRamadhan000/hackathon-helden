@@ -31,7 +31,7 @@ export default function LandingPageDesa() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950 font-sans antialiased selection:bg-blue-600 selection:text-white">
-      {/* 1. NAVIGASI UTAMA */}
+      {/* 1. NAVIGASI UTAMA (CLEAN VERSION) */}
       <nav className="sticky top-0 z-50 flex items-center justify-between px-6 lg:px-12 py-4 bg-white/80 backdrop-blur-md border-b border-slate-200/60">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-blue-900 text-white flex items-center justify-center font-bold text-lg rounded-xl shadow-md shadow-blue-900/10">
@@ -47,7 +47,8 @@ export default function LandingPageDesa() {
           </div>
         </div>
 
-        <div className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-800">
+        {/* Link Navigasi Bersih Tanpa Duplikasi */}
+        <div className="hidden md:flex items-center gap-8 text-xs font-bold text-slate-700">
           <a href="#statistik" className="hover:text-blue-600 transition">
             Statistik Data
           </a>
@@ -57,20 +58,23 @@ export default function LandingPageDesa() {
           <a href="#cek-nik" className="hover:text-blue-600 transition">
             Layanan Mandiri Warga
           </a>
+          <Link href="/evaluasi" className="hover:text-blue-600 transition">
+            Hasil Evaluasi
+          </Link>
         </div>
 
         <div>
           <Link
             href="/login"
-            className="bg-[#0f172a] text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-slate-800 transition"
+            className="bg-[#0f172a] text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-slate-800 transition shadow-sm"
           >
             Masuk Staff Portal
           </Link>
         </div>
       </nav>
 
-      {/* 2. HERO & WIDGET CEK STATUS M MANDIRI (LAYOUT GRID ASIMETRIS ASLI) */}
-      <header className="max-w-7xl mx-auto px-6 lg:px-12 pt-16 pb-24 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+      {/* 2. HERO & WIDGET CEK STATUS MANDIRI */}
+      <header className="max-w-7xl mx-auto px-6 lg:px-12 pt-16 pb-20 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
         {/* Konten Kiri: Penjelasan & Headline */}
         <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-800 rounded-full text-xs font-bold tracking-wide">
@@ -88,19 +92,19 @@ export default function LandingPageDesa() {
             data kependudukan makro, realisasi pos anggaran APBDes, serta
             transparansi penetapan bantuan secara berkala.
           </p>
-          <div className="flex flex-wrap justify-center lg:justify-start gap-4 pt-2">
+          <div className="flex flex-wrap justify-center lg:justify-start gap-3 pt-2">
             <a
               href="#cek-nik"
               className="px-6 py-3 bg-blue-600 text-white text-sm font-bold rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-600/20"
             >
               Periksa NIK Saya Mandiri
             </a>
-            <a
-              href="#anggaran"
-              className="px-6 py-3 bg-white text-slate-800 text-sm font-bold rounded-xl border border-slate-200 hover:bg-slate-50 transition"
+            <Link
+              href="/evaluasi"
+              className="px-6 py-3 bg-slate-900 text-white text-sm font-bold rounded-xl hover:bg-slate-800 transition shadow-md"
             >
-              Lihat Laporan Keuangan
-            </a>
+              Lihat Hasil Evaluasi
+            </Link>
           </div>
         </div>
 
@@ -189,7 +193,62 @@ export default function LandingPageDesa() {
         </div>
       </header>
 
-      {/* 3. SECTION STATISTIK AGREGAT MAKR0 */}
+      {/* 3. SECTION TUNGGAL INTEGRASI MID-PAGE (DENGAN NOTIFIKASI PENJELAS) */}
+      <section className="max-w-7xl mx-auto px-6 lg:px-12 pb-16">
+        {/* Teks Notifikasi / Informasi Konteks */}
+        <div className="mb-4 p-4 rounded-2xl bg-amber-50/80 border border-amber-200/70 flex items-start gap-3 text-amber-900">
+          <span className="text-base shrink-0">💡</span>
+          <div className="text-xs leading-relaxed">
+            <strong className="font-bold block text-amber-950 mb-0.5">
+              Notifikasi Integrasi Data External:
+            </strong>
+            Sistem ERP Desa terkoneksi secara <em>read-only</em> dengan dua
+            modul pendukung di bawah ini untuk menjaga keabsahan data
+            kependudukan dan transparansi batas anggaran bantuan sosial.
+          </div>
+        </div>
+
+        {/* Card Bridge Siskeudes & Dukcapil */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <Link
+            href="/siskeudes"
+            className="group bg-white border border-slate-200 hover:border-emerald-500 p-6 rounded-2xl shadow-sm hover:shadow-md transition flex items-center justify-between"
+          >
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg">
+                Bridge Modul Keuangan
+              </span>
+              <h4 className="text-lg font-bold text-slate-900 group-hover:text-emerald-700 transition pt-1">
+                Akses Integrasi Siskeudes →
+              </h4>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Menampilkan struktur APBDes resmi, pagu anggaran teralokasi,
+                serta batas maksimal dana per KK.
+              </p>
+            </div>
+          </Link>
+
+          <Link
+            href="/dukcapil"
+            className="group bg-white border border-slate-200 hover:border-blue-500 p-6 rounded-2xl shadow-sm hover:shadow-md transition flex items-center justify-between"
+          >
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-lg">
+                Bridge Modul Kependudukan
+              </span>
+              <h4 className="text-lg font-bold text-slate-900 group-hover:text-blue-700 transition pt-1">
+                Akses Master Data Dukcapil →
+              </h4>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Pusat referensi data warga resmi untuk validasi format NIK dan
+                deteksi warga meninggal/pindah.
+              </p>
+            </div>
+          </Link>
+        </div>
+      </section>
+
+      {/* 4. SECTION STATISTIK AGREGAT MAKRO */}
       <section
         id="statistik"
         className="bg-slate-100/60 border-y border-slate-200/60 py-16"
@@ -227,7 +286,7 @@ export default function LandingPageDesa() {
         </div>
       </section>
 
-      {/* 4. SECTION KONTEN TAMBAHAN: TRANSPARANSI ANGGARAN (APBDes 2026) */}
+      {/* 5. SECTION TRANSPARANSI ANGGARAN (APBDes 2026) */}
       <section id="anggaran" className="max-w-7xl mx-auto px-6 lg:px-12 py-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
           <div className="lg:col-span-5 space-y-4">
@@ -242,6 +301,15 @@ export default function LandingPageDesa() {
               dipublikasikan secara transparan setelah melalui validasi
               menyeluruh oleh Sekretaris Desa.
             </p>
+
+            <div className="pt-2">
+              <Link
+                href="/siskeudes"
+                className="inline-flex items-center gap-2 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-4 py-2.5 rounded-xl transition"
+              >
+                Buka Detail Laporan Siskeudes →
+              </Link>
+            </div>
           </div>
 
           <div className="lg:col-span-7 bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
@@ -258,27 +326,27 @@ export default function LandingPageDesa() {
                   <td className="px-6 py-4 font-bold text-slate-950">
                     Perlindungan Sosial (Bansos)
                   </td>
-                  <td className="px-6 py-4">Rp 150.000.000</td>
+                  <td className="px-6 py-4">Rp 360.000.000</td>
                   <td className="px-6 py-4 text-emerald-600 font-bold">
-                    Rp 90.000.000
+                    Rp 270.000.000
                   </td>
                 </tr>
                 <tr>
                   <td className="px-6 py-4 font-bold text-slate-950">
-                    Operasional Aparatur Desa
+                    Operasional Aparatur Desa (ADD)
                   </td>
-                  <td className="px-6 py-4">Rp 75.000.000</td>
+                  <td className="px-6 py-4">Rp 280.000.000</td>
                   <td className="px-6 py-4 text-emerald-600 font-bold">
-                    Rp 75.000.000
+                    Rp 210.000.000
                   </td>
                 </tr>
                 <tr>
                   <td className="px-6 py-4 font-bold text-slate-950">
                     Pembangunan Infrastruktur Fisik
                   </td>
-                  <td className="px-6 py-4">Rp 200.000.000</td>
-                  <td className="px-6 py-4 text-slate-400 italic font-normal">
-                    Tahap Pengajuan
+                  <td className="px-6 py-4">Rp 450.000.000</td>
+                  <td className="px-6 py-4 text-emerald-600 font-bold">
+                    Rp 320.000.000
                   </td>
                 </tr>
               </tbody>
@@ -287,7 +355,7 @@ export default function LandingPageDesa() {
         </div>
       </section>
 
-      {/* 5. FOOTER */}
+      {/* 6. FOOTER */}
       <footer className="bg-slate-900 text-slate-400 text-xs py-8 border-t border-slate-800 text-center">
         <p>
           © 2026 Pemerintah Kabupaten Malang — Portal Resmi Informasi Desa
