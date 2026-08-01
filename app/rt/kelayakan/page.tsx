@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import FormSurveiKelayakan from "@/components/rt/FormSurveiKelayakan";
@@ -89,13 +89,10 @@ const mockRiwayatSurveiPerTahun: Record<
   ],
 };
 
-const FILTER_KATEGORI = [
-  "Semua",
-  "Sangat Layak (Prioritas SK)",
-  "Cukup Layak",
-];
+const FILTER_KATEGORI = ["Semua", "Sangat Layak (Prioritas SK)", "Cukup Layak"];
 
-export default function HalamanKelayakan() {
+// KOMPONEN KONTEN UTAMA (PENGGUNA `useSearchParams`)
+function KelayakanContent() {
   const searchParams = useSearchParams();
   const tahunPeriode = searchParams.get("tahun") || "2026";
   const isTahunAktif = tahunPeriode === "2026";
@@ -163,7 +160,7 @@ export default function HalamanKelayakan() {
               <button
                 type="button"
                 onClick={() => setShowModal(true)}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold rounded-xl transition shadow-sm shadow-emerald-600/20"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold rounded-xl transition shadow-sm shadow-emerald-600/20 cursor-pointer"
               >
                 <span className="text-sm leading-none">+</span>
                 Input Survei Baru
@@ -209,7 +206,7 @@ export default function HalamanKelayakan() {
             </select>
           </div>
 
-          {/* ========== MOBILE: Card List ========== */}
+          {/* MOBILE: Card List */}
           <div className="sm:hidden divide-y divide-slate-100">
             {filteredData.length > 0 ? (
               filteredData.map((item) => (
@@ -249,7 +246,7 @@ export default function HalamanKelayakan() {
 
                   <button
                     type="button"
-                    className="w-full py-2 text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 active:bg-emerald-100 rounded-lg border border-emerald-100 transition"
+                    className="w-full py-2 text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 active:bg-emerald-100 rounded-lg border border-emerald-100 transition cursor-pointer"
                   >
                     Lihat Detail
                   </button>
@@ -264,7 +261,7 @@ export default function HalamanKelayakan() {
             )}
           </div>
 
-          {/* ========== DESKTOP: Table ========== */}
+          {/* DESKTOP: Table */}
           <div className="hidden sm:block overflow-x-auto">
             <table className="w-full text-left text-sm border-collapse">
               <thead>
@@ -317,7 +314,7 @@ export default function HalamanKelayakan() {
                       <td className="px-5 py-3.5 text-right">
                         <button
                           type="button"
-                          className="px-3 py-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg border border-emerald-100 transition"
+                          className="px-3 py-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg border border-emerald-100 transition cursor-pointer"
                         >
                           Detail
                         </button>
@@ -359,5 +356,20 @@ export default function HalamanKelayakan() {
         />
       )}
     </div>
+  );
+}
+
+// EXPORT DEFAULT UTAMA DENGAN SUSPENSE BOUNDARY
+export default function HalamanKelayakan() {
+  return (
+    <Suspense
+      fallback={
+        <div className="p-10 text-center text-xs text-slate-400">
+          Memuat Survei Kelayakan...
+        </div>
+      }
+    >
+      <KelayakanContent />
+    </Suspense>
   );
 }
