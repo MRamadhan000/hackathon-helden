@@ -4,6 +4,27 @@ import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import KadesHeader from "@/components/kades/KadesHeader";
+import { Line } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Filler,
+} from "chart.js";
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Filler
+);
 
 // Mock Data Eksekutif Kades Per Tahun
 const mockExecutiveData: Record<string, any> = {
@@ -55,7 +76,103 @@ const mockExecutiveData: Record<string, any> = {
     sisaPaguSiskeudes: "Rp 0",
     statusAlurBansos: "Selesai (Terkunci)",
     draftSkSiapTtd: [],
-    sebaranKpmRt: [],
+    sebaranKpmRt: [
+      { rt: "RT 01 / RW 01", jumlahKpm: 48, kuotaPersen: 100 },
+      { rt: "RT 02 / RW 01", jumlahKpm: 42, kuotaPersen: 100 },
+      { rt: "RT 03 / RW 01", jumlahKpm: 62, kuotaPersen: 100 },
+      { rt: "RT 04 / RW 01", jumlahKpm: 68, kuotaPersen: 100 },
+      { rt: "RT 05 / RW 01", jumlahKpm: 52, kuotaPersen: 100 },
+    ],
+  },
+  "2023": {
+    totalWarga: "3.195",
+    totalKpmAktif: 268,
+    paguAnggaranBansos: "Rp 322.000.000",
+    sisaPaguSiskeudes: "Rp 0",
+    statusAlurBansos: "Selesai (Terkunci)",
+    draftSkSiapTtd: [],
+    sebaranKpmRt: [
+      { rt: "RT 01 / RW 01", jumlahKpm: 46, kuotaPersen: 100 },
+      { rt: "RT 02 / RW 01", jumlahKpm: 39, kuotaPersen: 100 },
+      { rt: "RT 03 / RW 01", jumlahKpm: 58, kuotaPersen: 100 },
+      { rt: "RT 04 / RW 01", jumlahKpm: 64, kuotaPersen: 100 },
+      { rt: "RT 05 / RW 01", jumlahKpm: 49, kuotaPersen: 100 },
+    ],
+  },
+  "2022": {
+    totalWarga: "3.240",
+    totalKpmAktif: 252,
+    paguAnggaranBansos: "Rp 302.400.000",
+    sisaPaguSiskeudes: "Rp 0",
+    statusAlurBansos: "Selesai (Terkunci)",
+    draftSkSiapTtd: [],
+    sebaranKpmRt: [
+      { rt: "RT 01 / RW 01", jumlahKpm: 44, kuotaPersen: 100 },
+      { rt: "RT 02 / RW 01", jumlahKpm: 36, kuotaPersen: 100 },
+      { rt: "RT 03 / RW 01", jumlahKpm: 54, kuotaPersen: 100 },
+      { rt: "RT 04 / RW 01", jumlahKpm: 61, kuotaPersen: 100 },
+      { rt: "RT 05 / RW 01", jumlahKpm: 46, kuotaPersen: 100 },
+    ],
+  },
+  "2021": {
+    totalWarga: "3.088",
+    totalKpmAktif: 291,
+    paguAnggaranBansos: "Rp 349.200.000",
+    sisaPaguSiskeudes: "Rp 0",
+    statusAlurBansos: "Selesai (Terkunci)",
+    draftSkSiapTtd: [],
+    sebaranKpmRt: [
+      { rt: "RT 01 / RW 01", jumlahKpm: 50, kuotaPersen: 100 },
+      { rt: "RT 02 / RW 01", jumlahKpm: 43, kuotaPersen: 100 },
+      { rt: "RT 03 / RW 01", jumlahKpm: 64, kuotaPersen: 100 },
+      { rt: "RT 04 / RW 01", jumlahKpm: 72, kuotaPersen: 100 },
+      { rt: "RT 05 / RW 01", jumlahKpm: 55, kuotaPersen: 100 },
+    ],
+  },
+  "2020": {
+    totalWarga: "3.152",
+    totalKpmAktif: 275,
+    paguAnggaranBansos: "Rp 330.000.000",
+    sisaPaguSiskeudes: "Rp 0",
+    statusAlurBansos: "Selesai (Terkunci)",
+    draftSkSiapTtd: [],
+    sebaranKpmRt: [
+      { rt: "RT 01 / RW 01", jumlahKpm: 47, kuotaPersen: 100 },
+      { rt: "RT 02 / RW 01", jumlahKpm: 41, kuotaPersen: 100 },
+      { rt: "RT 03 / RW 01", jumlahKpm: 60, kuotaPersen: 100 },
+      { rt: "RT 04 / RW 01", jumlahKpm: 67, kuotaPersen: 100 },
+      { rt: "RT 05 / RW 01", jumlahKpm: 50, kuotaPersen: 100 },
+    ],
+  },
+  "2019": {
+    totalWarga: "2.980",
+    totalKpmAktif: 232,
+    paguAnggaranBansos: "Rp 278.400.000",
+    sisaPaguSiskeudes: "Rp 0",
+    statusAlurBansos: "Selesai (Terkunci)",
+    draftSkSiapTtd: [],
+    sebaranKpmRt: [
+      { rt: "RT 01 / RW 01", jumlahKpm: 40, kuotaPersen: 100 },
+      { rt: "RT 02 / RW 01", jumlahKpm: 34, kuotaPersen: 100 },
+      { rt: "RT 03 / RW 01", jumlahKpm: 51, kuotaPersen: 100 },
+      { rt: "RT 04 / RW 01", jumlahKpm: 58, kuotaPersen: 100 },
+      { rt: "RT 05 / RW 01", jumlahKpm: 49, kuotaPersen: 100 },
+    ],
+  },
+  "2018": {
+    totalWarga: "3.045",
+    totalKpmAktif: 219,
+    paguAnggaranBansos: "Rp 262.800.000",
+    sisaPaguSiskeudes: "Rp 0",
+    statusAlurBansos: "Selesai (Terkunci)",
+    draftSkSiapTtd: [],
+    sebaranKpmRt: [
+      { rt: "RT 01 / RW 01", jumlahKpm: 38, kuotaPersen: 100 },
+      { rt: "RT 02 / RW 01", jumlahKpm: 32, kuotaPersen: 100 },
+      { rt: "RT 03 / RW 01", jumlahKpm: 48, kuotaPersen: 100 },
+      { rt: "RT 04 / RW 01", jumlahKpm: 55, kuotaPersen: 100 },
+      { rt: "RT 05 / RW 01", jumlahKpm: 46, kuotaPersen: 100 },
+    ],
   },
 };
 
@@ -100,6 +217,63 @@ function DashboardKadesContent() {
       `Sukses: Dokumen ${nomor} berhasil ditandatangani dan terbit sebagai SK Penetapan Resmi Kades!`,
     );
     setTimeout(() => setNotif(""), 5000);
+  };
+
+  // Ambil trend jumlah penduduk dari semua tahun yang tersedia di mock data
+  const tahunUrut = Object.keys(mockExecutiveData).sort(); // ["2024","2025","2026"]
+  const trendPendudukData = {
+    labels: tahunUrut,
+    datasets: [
+      {
+        label: "Total Penduduk Terdata",
+        data: tahunUrut.map((thn) =>
+          parseInt(mockExecutiveData[thn].totalWarga.replace(/\./g, ""), 10),
+        ),
+        borderColor: "#2563eb",
+        backgroundColor: "rgba(37, 99, 235, 0.08)",
+        pointBackgroundColor: "#2563eb",
+        pointBorderColor: "#fff",
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        borderWidth: 2.5,
+        tension: 0.35,
+        fill: true,
+      },
+    ],
+  };
+
+  const trendPendudukOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: "#0f172a",
+        padding: 10,
+        titleFont: { size: 11, weight: "bold" as const },
+        bodyFont: { size: 11 },
+        callbacks: {
+          label: (ctx: any) => ` ${ctx.parsed.y.toLocaleString("id-ID")} Jiwa`,
+        },
+      },
+    },
+    scales: {
+      x: {
+        grid: { display: false },
+        ticks: {
+          font: { size: 11, weight: "bold" as const },
+          color: "#64748b",
+        },
+      },
+      y: {
+        grid: { color: "#f1f5f9" },
+        ticks: {
+          font: { size: 10 },
+          color: "#94a3b8",
+          callback: (val: any) => val.toLocaleString("id-ID"),
+        },
+      },
+    },
   };
 
   return (
@@ -198,6 +372,23 @@ function DashboardKadesContent() {
             <p className="text-[11px] text-slate-500">
               Kuota Cadangan Pagu Tahun Ini
             </p>
+          </div>
+        </div>
+
+        {/* 1.5 TREN PERTUMBUHAN PENDUDUK */}
+        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200/80 shadow-xs space-y-6">
+          <div>
+            <h3 className="text-base font-bold text-slate-950">
+              📈 Tren Pertumbuhan Jumlah Penduduk
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Perkembangan total penduduk terdata dari tahun ke tahun
+              berdasarkan data Master RT.
+            </p>
+          </div>
+
+          <div className="h-64 sm:h-72">
+            <Line data={trendPendudukData} options={trendPendudukOptions} />
           </div>
         </div>
 
