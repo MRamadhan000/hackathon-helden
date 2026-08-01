@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import FormMutasiLengkap from "@/components/rt/FormMutasiLengkap";
@@ -119,7 +119,8 @@ const FILTER_JENIS = [
   "3. Koreksi Data",
 ];
 
-export default function HalamanMutasi() {
+// KOMPONEN KONTEN UTAMA (Pengguna hook useSearchParams)
+function MutasiContent() {
   const searchParams = useSearchParams();
   const tahunPeriode = searchParams.get("tahun") || "2026";
   const isTahunAktif = tahunPeriode === "2026";
@@ -508,5 +509,20 @@ export default function HalamanMutasi() {
         </div>
       )}
     </div>
+  );
+}
+
+// EXPORT DEFAULT DENGAN SUSPENSE BOUNDARY
+export default function HalamanMutasi() {
+  return (
+    <Suspense
+      fallback={
+        <div className="p-10 text-center text-xs text-slate-400">
+          Memuat Riwayat Mutasi...
+        </div>
+      }
+    >
+      <MutasiContent />
+    </Suspense>
   );
 }
