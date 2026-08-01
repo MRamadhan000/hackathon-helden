@@ -22,6 +22,7 @@ const mockWargaRT: PendudukRT[] = [
     tanggalLahir: "1985-05-12",
     statusPenduduk: "Tetap",
     statusVerifikasiDukcapil: "Terverifikasi",
+    terakhirDiperbarui: "2025-11-10", // < 2 Tahun (Terverifikasi/Aktif)
   },
   {
     id: "uuid-002",
@@ -32,6 +33,7 @@ const mockWargaRT: PendudukRT[] = [
     tanggalLahir: "1958-08-24",
     statusPenduduk: "Tetap",
     statusVerifikasiDukcapil: "Terverifikasi",
+    terakhirDiperbarui: "2023-04-15", // >= 2 Tahun (Butuh Pemutakhiran)
   },
   {
     id: "uuid-003",
@@ -42,6 +44,7 @@ const mockWargaRT: PendudukRT[] = [
     tanggalLahir: "1945-01-15",
     statusPenduduk: "Meninggal",
     statusVerifikasiDukcapil: "Anomali / Unverified",
+    terakhirDiperbarui: "2026-01-20", // < 2 Tahun (Terverifikasi/Aktif)
   },
 ];
 
@@ -77,6 +80,7 @@ const initialSanggahanRumah: SanggahanKondisiRumah[] = [
 ];
 
 export default function DashboardRT() {
+  const [tahunPeriode, setTahunPeriode] = useState("2026");
   const [activeMode, setActiveMode] = useState<
     "warga" | "kependudukan" | "kelayakan" | "sanggahan"
   >("warga");
@@ -157,7 +161,8 @@ export default function DashboardRT() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950 font-sans antialiased">
-      <RTHeader />
+      {/* HEADER DENGAN FILTER TAHUN PERIODE */}
+      <RTHeader tahunPeriode={tahunPeriode} setTahunPeriode={setTahunPeriode} />
 
       <main className="max-w-7xl mx-auto px-6 lg:px-12 py-8 space-y-8">
         {/* NOTIFIKASI AKSI */}
