@@ -5,93 +5,11 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import FormSurveiKelayakan from "@/components/rt/FormSurveiKelayakan";
 import { PendudukRT } from "@/components/rt/TableWarga";
-
-const mockWargaRT: PendudukRT[] = [
-  {
-    id: "uuid-001",
-    nik: "3507011234560001",
-    nama: "Budi Santoso",
-    jenisKelamin: "L",
-    tempatLahir: "Kab. Malang",
-    tanggalLahir: "1985-05-12",
-    statusPenduduk: "Tetap",
-    statusVerifikasiDukcapil: "Terverifikasi",
-    terakhirDiperbarui: "2025-11-10",
-  },
-  {
-    id: "uuid-002",
-    nik: "3507019876540002",
-    nama: "Siti Aminah",
-    jenisKelamin: "P",
-    tempatLahir: "Kota Surabaya",
-    tanggalLahir: "1958-08-24",
-    statusPenduduk: "Tetap",
-    statusVerifikasiDukcapil: "Terverifikasi",
-    terakhirDiperbarui: "2023-04-15",
-  },
-  {
-    id: "uuid-003",
-    nik: "3507015554440003",
-    nama: "Joko Widodo (Alm)",
-    jenisKelamin: "L",
-    tempatLahir: "Kab. Blitar",
-    tanggalLahir: "1945-01-15",
-    statusPenduduk: "Meninggal",
-    statusVerifikasiDukcapil: "Anomali / Unverified",
-    terakhirDiperbarui: "2026-01-20",
-  },
-];
-
-const mockRiwayatSurveiPerTahun: Record<
-  string,
-  {
-    id: string;
-    tanggal: string;
-    nik: string;
-    nama: string;
-    skor: number;
-    kategori: string;
-    indikator: string;
-  }[]
-> = {
-  "2026": [
-    {
-      id: "s-2026-1",
-      tanggal: "12/02/2026",
-      nik: "3507011234560001",
-      nama: "Budi Santoso",
-      skor: 45,
-      kategori: "Cukup Layak",
-      indikator: "Lantai Semen, Dinding Tembok",
-    },
-  ],
-  "2025": [
-    {
-      id: "s-1",
-      tanggal: "15/05/2025",
-      nik: "3507019876540002",
-      nama: "Siti Aminah",
-      skor: 70,
-      kategori: "Sangat Layak (Prioritas SK)",
-      indikator: "Lantai Tanah, Dinding Bambu, Ada Lansia",
-    },
-  ],
-  "2024": [
-    {
-      id: "s-2",
-      tanggal: "04/10/2024",
-      nik: "3507015554440003",
-      nama: "Joko Widodo",
-      skor: 85,
-      kategori: "Sangat Layak (Prioritas SK)",
-      indikator: "Sungai, Buruh Harian, Tidak Ada Jamban",
-    },
-  ],
-};
+import { useSurveiKelayakan } from "@/hooks/cores/useSurveiKelayakan";
+import { usePenduduk } from "@/hooks/cores/usePenduduk";
 
 const FILTER_KATEGORI = ["Semua", "Sangat Layak (Prioritas SK)", "Cukup Layak"];
 
-// KOMPONEN KONTEN UTAMA (PENGGUNA `useSearchParams`)
 function KelayakanContent() {
   const searchParams = useSearchParams();
   const tahunPeriode = searchParams.get("tahun") || "2026";
@@ -102,7 +20,43 @@ function KelayakanContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterKategori, setFilterKategori] = useState("Semua");
 
-  const riwayatSurvei = mockRiwayatSurveiPerTahun[tahunPeriode] || [];
+  // Real Supabase Connection via Custom Hooks
+  const { data: realSurveiList, isLoading, submit: submitSurveiHook } = useSurveiKelayakan(tahunPeriode);
+  const { data: realPendudukList } = usePenduduk();
+
+  // Map Real Data Warga ke Format PendudukRT
+  const daftarWarga: PendudukRT[] = useMemo(() => {
+    return (realPendudukList || []).map((p) => ({
+      id: p.id,
+      nik: p.nik,
+      nama: p.nama,
+      jenisKelamin: (p.jenisKelamin === "P" ? "P" : "L") as "L" | "P",
+      tempatLahir: p.tempatLahir,
+      tanggalLahir: p.tanggalLahir,
+      statusPenduduk: (["Tetap", "Pindah", "Meninggal"].includes(p.statusPenduduk)
+        ? p.statusPenduduk
+        : "Tetap") as "Tetap" | "Pindah" | "Meninggal",
+      statusVerifikasiDukcapil: (p.statusVerifikasiDukcapil === "Anomali / Unverified"
+        ? "Anomali / Unverified"
+        : "Terverifikasi") as "Terverifikasi" | "Anomali / Unverified",
+      terakhirDiperbarui: "-",
+    }));
+  }, [realPendudukList]);
+
+  // Map Real Data Survei Kelayakan Supabase
+  const riwayatSurvei = useMemo(() => {
+    return (realSurveiList || []).map((item) => ({
+      id: item.id,
+      tanggal: item.createdAt ? new Date(item.createdAt).toLocaleDateString("id-ID") : "-",
+      nik: item.nik,
+      nama: item.nama,
+      skor: item.skor,
+      kategori: item.kategori,
+      indikator: item.indikatorDetail,
+      rawStatus: item.status,
+      reqMethod: item.tipeProses,
+    }));
+  }, [realSurveiList]);
 
   const filteredData = useMemo(() => {
     return riwayatSurvei.filter((item) => {
@@ -120,10 +74,33 @@ function KelayakanContent() {
     });
   }, [riwayatSurvei, searchQuery, filterKategori]);
 
-  const handleSurveiSubmit = (e: React.FormEvent, data: any) => {
+  const handleSurveiSubmit = async (e: React.FormEvent, dataHasil: any) => {
     e.preventDefault();
-    alert("Hasil survei Prodeskel berhasil dikirim ke Sekretaris Desa!");
-    setShowModal(false);
+    try {
+      await submitSurveiHook(
+        {
+          pendudukId: dataHasil?.pendudukId || "00000000-0000-0000-0000-000000000000",
+          nik: dataHasil?.nik || selectedNik || "3507000000000001",
+          nama: dataHasil?.nama || "Warga Survei",
+          skor: Number(dataHasil?.skor) || 50,
+          kategori: (dataHasil?.kategori as any) || "Cukup Layak",
+          indikatorDetail: dataHasil?.indikator || "Survei Prodeskel DDK",
+          jenisDinding: dataHasil?.jenisDinding,
+          jenisLantai: dataHasil?.jenisLantai,
+          sanitasi: dataHasil?.sanitasi,
+          adaLansia: dataHasil?.adaLansia || false,
+          tipeProses: "OFFLINE",
+          tahunPeriode: tahunPeriode,
+        },
+        "rt-user-id",
+        "RT"
+      );
+      alert("Hasil survei Prodeskel berhasil dikirim ke Sekretaris Desa!");
+      setShowModal(false);
+    } catch (err) {
+      console.error(err);
+      alert("Gagal mengirim survei kelayakan: " + (err as Error).message);
+    }
   };
 
   return (
@@ -163,7 +140,7 @@ function KelayakanContent() {
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold rounded-xl transition shadow-sm shadow-emerald-600/20 cursor-pointer"
               >
                 <span className="text-sm leading-none">+</span>
-                Input Survei Baru
+                Input Survei Baru (Offline RT)
               </button>
             )}
           </div>
@@ -206,140 +183,133 @@ function KelayakanContent() {
             </select>
           </div>
 
-          {/* MOBILE: Card List */}
-          <div className="sm:hidden divide-y divide-slate-100">
-            {filteredData.length > 0 ? (
-              filteredData.map((item) => (
-                <div key={item.id} className="p-4 space-y-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="font-bold text-slate-900 text-sm truncate">
-                        {item.nama}
-                      </p>
-                      <p className="font-mono text-[11px] text-slate-400 mt-0.5">
-                        {item.nik}
-                      </p>
-                    </div>
-                    <span
-                      className={`shrink-0 px-2 py-1 rounded-lg text-[10px] font-bold ${
-                        item.skor >= 50
-                          ? "bg-emerald-600 text-white"
-                          : "bg-slate-200 text-slate-700"
-                      }`}
-                    >
-                      {item.skor >= 50 ? "Sangat Layak" : "Cukup Layak"}
-                    </span>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="px-2 py-1 rounded-lg bg-emerald-100 text-emerald-900 font-extrabold text-[11px]">
-                      {item.skor} / 100
-                    </span>
-                    <span className="text-[11px] text-slate-500 font-mono">
-                      {item.tanggal}
-                    </span>
-                  </div>
-
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    {item.indikator}
-                  </p>
-
-                  <button
-                    type="button"
-                    className="w-full py-2 text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 active:bg-emerald-100 rounded-lg border border-emerald-100 transition cursor-pointer"
-                  >
-                    Lihat Detail
-                  </button>
-                </div>
-              ))
-            ) : (
-              <div className="p-10 text-center text-slate-400 text-xs">
-                {searchQuery || filterKategori !== "Semua"
-                  ? "Tidak ada data yang cocok dengan pencarian / filter."
-                  : `Belum ada hasil survei pada tahun ${tahunPeriode}.`}
-              </div>
-            )}
-          </div>
-
-          {/* DESKTOP: Table */}
-          <div className="hidden sm:block overflow-x-auto">
-            <table className="w-full text-left text-sm border-collapse">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200/80 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
-                  <th className="px-5 py-3">Tgl Survei</th>
-                  <th className="px-5 py-3">Nama Warga</th>
-                  <th className="px-5 py-3">Indikator</th>
-                  <th className="px-5 py-3">Skor</th>
-                  <th className="px-5 py-3 text-right">Rekomendasi</th>
-                  <th className="px-5 py-3 text-right">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
+          {/* LOADING STATE */}
+          {isLoading ? (
+            <div className="p-10 text-center text-xs text-slate-400">
+              Memuat data survei kelayakan dari Supabase...
+            </div>
+          ) : (
+            <>
+              {/* MOBILE: Card List */}
+              <div className="sm:hidden divide-y divide-slate-100">
                 {filteredData.length > 0 ? (
                   filteredData.map((item) => (
-                    <tr
-                      key={item.id}
-                      className="hover:bg-slate-50/60 transition"
-                    >
-                      <td className="px-5 py-3.5 text-xs text-slate-500 font-mono whitespace-nowrap">
-                        {item.tanggal}
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <p className="font-bold text-slate-900 text-xs">
-                          {item.nama}
-                        </p>
-                        <p className="font-mono text-[11px] text-slate-400">
-                          NIK: {item.nik}
-                        </p>
-                      </td>
-                      <td className="px-5 py-3.5 text-xs text-slate-600 max-w-[200px]">
-                        {item.indikator}
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <span className="px-2.5 py-1 bg-emerald-100 text-emerald-900 font-extrabold text-xs rounded-lg whitespace-nowrap">
-                          {item.skor} / 100
-                        </span>
-                      </td>
-                      <td className="px-5 py-3.5 text-right">
+                    <div key={item.id} className="p-4 space-y-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="font-bold text-slate-900 text-sm truncate">
+                            {item.nama}
+                          </p>
+                          <p className="font-mono text-[11px] text-slate-400 mt-0.5">
+                            {item.nik}
+                          </p>
+                        </div>
                         <span
-                          className={`px-2.5 py-1 rounded-lg text-xs font-bold whitespace-nowrap ${
+                          className={`shrink-0 px-2 py-1 rounded-lg text-[10px] font-bold ${
                             item.skor >= 50
                               ? "bg-emerald-600 text-white"
                               : "bg-slate-200 text-slate-700"
                           }`}
                         >
-                          {item.kategori}
+                          {item.skor >= 50 ? "Sangat Layak" : "Cukup Layak"}
                         </span>
-                      </td>
-                      <td className="px-5 py-3.5 text-right">
-                        <button
-                          type="button"
-                          className="px-3 py-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg border border-emerald-100 transition cursor-pointer"
-                        >
-                          Detail
-                        </button>
-                      </td>
-                    </tr>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="px-2 py-1 rounded-lg bg-emerald-100 text-emerald-900 font-extrabold text-[11px]">
+                          Skor: {item.skor} / 100
+                        </span>
+                        <span className="text-[11px] text-slate-500 font-mono">
+                          {item.tanggal}
+                        </span>
+                      </div>
+
+                      <p className="text-xs text-slate-600 leading-relaxed">
+                        {item.indikator}
+                      </p>
+                    </div>
                   ))
                 ) : (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="p-10 text-center text-slate-400 text-xs"
-                    >
-                      {searchQuery || filterKategori !== "Semua"
-                        ? "Tidak ada data yang cocok dengan pencarian / filter."
-                        : `Belum ada hasil survei pada tahun ${tahunPeriode}.`}
-                    </td>
-                  </tr>
+                  <div className="p-10 text-center text-slate-400 text-xs">
+                    {searchQuery || filterKategori !== "Semua"
+                      ? "Tidak ada data yang cocok dengan pencarian / filter."
+                      : `Belum ada hasil survei pada tahun ${tahunPeriode}.`}
+                  </div>
                 )}
-              </tbody>
-            </table>
-          </div>
+              </div>
+
+              {/* DESKTOP: Table */}
+              <div className="hidden sm:block overflow-x-auto">
+                <table className="w-full text-left text-sm border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50 border-b border-slate-200/80 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                      <th className="px-5 py-3">Tgl Survei</th>
+                      <th className="px-5 py-3">Nama Warga</th>
+                      <th className="px-5 py-3">Indikator Detail</th>
+                      <th className="px-5 py-3">Skor Kelayakan</th>
+                      <th className="px-5 py-3 text-right">Kategori / Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
+                    {filteredData.length > 0 ? (
+                      filteredData.map((item) => (
+                        <tr
+                          key={item.id}
+                          className="hover:bg-slate-50/60 transition"
+                        >
+                          <td className="px-5 py-3.5 text-xs text-slate-500 font-mono whitespace-nowrap">
+                            {item.tanggal}
+                          </td>
+                          <td className="px-5 py-3.5">
+                            <p className="font-bold text-slate-900 text-xs">
+                              {item.nama}
+                            </p>
+                            <p className="font-mono text-[11px] text-slate-400">
+                              NIK: {item.nik}
+                            </p>
+                          </td>
+                          <td className="px-5 py-3.5 text-xs text-slate-600 max-w-[200px]">
+                            {item.indikator}
+                          </td>
+                          <td className="px-5 py-3.5">
+                            <span className="px-2.5 py-1 bg-emerald-100 text-emerald-900 font-extrabold text-xs rounded-lg whitespace-nowrap">
+                              {item.skor} / 100
+                            </span>
+                          </td>
+                          <td className="px-5 py-3.5 text-right">
+                            <span
+                              className={`px-2.5 py-1 rounded-lg text-xs font-bold whitespace-nowrap ${
+                                item.skor >= 50
+                                  ? "bg-emerald-600 text-white"
+                                  : "bg-slate-200 text-slate-700"
+                              }`}
+                            >
+                              {item.kategori}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td
+                          colSpan={5}
+                          className="p-10 text-center text-slate-400 text-xs"
+                        >
+                          {searchQuery || filterKategori !== "Semua"
+                            ? "Tidak ada data yang cocok dengan pencarian / filter."
+                            : `Belum ada hasil survei pada tahun ${tahunPeriode}.`}
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
 
           {/* Footer */}
           <div className="px-4 sm:px-5 py-3 bg-slate-50/50 border-t border-slate-100 text-[11px] text-slate-500 font-medium">
-            Menampilkan {filteredData.length} dari {riwayatSurvei.length} data
+            Menampilkan {filteredData.length} dari {riwayatSurvei.length} data survei
           </div>
         </div>
       </div>
@@ -348,7 +318,7 @@ function KelayakanContent() {
       {showModal && isTahunAktif && (
         <FormSurveiKelayakan
           tahunPeriode={tahunPeriode}
-          daftarWarga={mockWargaRT}
+          daftarWarga={daftarWarga}
           selectedNik={selectedNik}
           setSelectedNik={setSelectedNik}
           onSubmitSurvei={handleSurveiSubmit}
@@ -359,7 +329,6 @@ function KelayakanContent() {
   );
 }
 
-// EXPORT DEFAULT UTAMA DENGAN SUSPENSE BOUNDARY
 export default function HalamanKelayakan() {
   return (
     <Suspense
