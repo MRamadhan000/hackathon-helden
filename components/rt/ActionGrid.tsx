@@ -14,16 +14,16 @@ export default function ActionGrid({
   const cards = [
     {
       id: "warga",
-      title: "Daftar Data Warga & Bansos",
-      desc: "Lihat dan pantau status keberadaan warga serta jaminan sosial aktif di RT 03.",
-      tag: "Master Data RT",
+      title: "Daftar Kependudukan Warga RT",
+      desc: "Lihat dan kelola master data identitas serta status keberadaan warga di lingkungan RT 03.",
+      tag: "Master Data Warga",
       tagColor: "bg-slate-100 text-slate-800 border-slate-200",
       icon: "👥",
     },
     {
       id: "kependudukan",
-      title: "Pendataan Kependudukan & Mutasi",
-      desc: "Kumpulkan data warga baru, perubahan domisili pindah, atau status kematian.",
+      title: "Pendataan & Mutasi Warga",
+      desc: "Kumpulkan data warga baru, perubahan domisili pindah, atau pembaruan status kematian.",
       tag: "Pembaruan Data",
       tagColor: "bg-blue-50 text-blue-700 border-blue-200",
       icon: "📋",
