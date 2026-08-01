@@ -13,7 +13,7 @@ export function useConnection() {
 
     try {
       const result = await checkConnection();
-
+        
       setConnected(result);
       setLastChecked(new Date());
     } finally {
