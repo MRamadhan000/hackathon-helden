@@ -20,15 +20,21 @@ function WargaContent() {
       nik: p.nik,
       nama: p.nama,
       jenisKelamin: (p.jenisKelamin === "P" ? "P" : "L") as "L" | "P",
-      tempatLahir: p.tempatLahir,
-      tanggalLahir: p.tanggalLahir,
-      statusPenduduk: (["Tetap", "Pindah", "Meninggal"].includes(p.statusPenduduk)
+      tempatLahir: p.tempat_lahir,
+      tanggalLahir: p.tanggal_lahir,
+      statusPenduduk: (["Tetap", "Pindah", "Meninggal"].includes(
+        p.statusPenduduk,
+      )
         ? p.statusPenduduk
         : "Tetap") as "Tetap" | "Pindah" | "Meninggal",
-      statusVerifikasiDukcapil: (p.statusVerifikasiDukcapil === "Anomali / Unverified"
+      statusVerifikasiDukcapil: (p.statusVerifikasiDukcapil ===
+      "Anomali / Unverified"
         ? "Anomali / Unverified"
         : "Terverifikasi") as "Terverifikasi" | "Anomali / Unverified",
-      terakhirDiperbarui: "-",
+      terakhirDiperbarui: new Date(p.updated_at).toLocaleString("id-ID", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }),
     }));
   }, [realPendudukList]);
 

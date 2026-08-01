@@ -8,7 +8,7 @@ export async function getPendudukList(): Promise<Penduduk[]> {
     .from("tweb_penduduk")
     .select("*")
     .order("nama", { ascending: true });
-
+  
   if (error) throw error;
 
   return data;

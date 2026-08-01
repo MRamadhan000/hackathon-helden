@@ -105,6 +105,18 @@ export default function LoginFormRole({
     }
   };
 
+  // Render a safe loading skeleton during SSR / prior to client mount to avoid layout shifts & mismatches
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 sm:p-6 lg:p-10 font-sans relative antialiased">
+        <div className="max-w-md w-full space-y-6 pt-12 animate-pulse">
+          <div className="h-20 bg-slate-200 rounded-2xl w-full"></div>
+          <div className="h-64 bg-slate-200 rounded-2xl w-full"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 sm:p-6 lg:p-10 font-sans relative antialiased">
       {/* HEADER NAVIGASI */}
@@ -239,7 +251,7 @@ export default function LoginFormRole({
 
               <button
                 type="submit"
-                disabled={!mounted || isSubmitting || isAuthLoading}
+                disabled={isSubmitting || isAuthLoading}
                 className="w-full bg-slate-950 hover:bg-slate-800 active:bg-slate-900 text-white font-bold py-3.5 rounded-xl text-xs transition shadow-xs cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {isSubmitting ? (

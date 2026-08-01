@@ -54,8 +54,8 @@ function MutasiContent() {
       nik: p.nik,
       nama: p.nama,
       jenisKelamin: (p.jenisKelamin === "P" ? "P" : "L") as "L" | "P",
-      tempatLahir: p.tempatLahir,
-      tanggalLahir: p.tanggalLahir,
+      tempatLahir: p.tempat_lahir,
+      tanggalLahir: p.tanggal_lahir,
       statusPenduduk: (["Tetap", "Pindah", "Meninggal"].includes(p.statusPenduduk)
         ? p.statusPenduduk
         : "Tetap") as "Tetap" | "Pindah" | "Meninggal",
