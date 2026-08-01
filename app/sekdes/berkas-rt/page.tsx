@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
@@ -71,7 +71,30 @@ export default function HalamanValidasiBerkasRT() {
     initialBerkasPerTahun[tahunPeriode] || [],
   );
 
+  // State untuk Filter RT dan Search Input
+  const [filterRT, setFilterRT] = useState("SEMUA");
+  const [searchTerm, setSearchTerm] = useState("");
   const [notif, setNotif] = useState("");
+
+  // Ambil daftar unik Asal RT untuk isi dropdown
+  const opsiRT = useMemo(() => {
+    const listRtUnik = Array.from(new Set(daftarBerkas.map((b) => b.asalRT)));
+    return ["SEMUA", ...listRtUnik];
+  }, [daftarBerkas]);
+
+  // Logic Filtering gabungan (Filter RT + Search Term)
+  const berkasFiltered = useMemo(() => {
+    return daftarBerkas.filter((item) => {
+      const matchRT = filterRT === "SEMUA" || item.asalRT === filterRT;
+      const term = searchTerm.toLowerCase();
+      const matchSearch =
+        item.namaWarga.toLowerCase().includes(term) ||
+        item.jenisPengajuan.toLowerCase().includes(term) ||
+        item.keterangan.toLowerCase().includes(term);
+
+      return matchRT && matchSearch;
+    });
+  }, [daftarBerkas, filterRT, searchTerm]);
 
   const handleKeputusan = (id: string, keputusan: "Disetujui" | "Ditolak") => {
     setDaftarBerkas((prev) =>
@@ -127,7 +150,43 @@ export default function HalamanValidasiBerkasRT() {
             </p>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* TOOLBAR: SEARCH BAR & DROPDOWN FILTER ASAL RT */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+            {/* SEARCH INPUT */}
+            <div className="relative flex-1 max-w-sm">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400 text-xs">
+                🔍
+              </span>
+              <input
+                type="text"
+                placeholder="Cari nama warga, jenis, catatan..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-indigo-600 focus:bg-white transition"
+              />
+            </div>
+
+            {/* DROPDOWN FILTER ASAL RT */}
+            <div className="flex items-center gap-2 shrink-0">
+              <label className="text-xs font-bold text-slate-500">
+                Filter Asal RT:
+              </label>
+              <select
+                value={filterRT}
+                onChange={(e) => setFilterRT(e.target.value)}
+                className="bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 py-2 px-3 rounded-xl focus:outline-none focus:border-indigo-600 cursor-pointer"
+              >
+                {opsiRT.map((rt, idx) => (
+                  <option key={idx} value={rt}>
+                    {rt === "SEMUA" ? "Semua Wilayah RT" : rt}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* TABEL BERKAS MASUK */}
+          <div className="overflow-x-auto rounded-xl border border-slate-100">
             <table className="w-full text-left text-sm border-collapse">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200/80 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
@@ -140,8 +199,8 @@ export default function HalamanValidasiBerkasRT() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
-                {daftarBerkas.length > 0 ? (
-                  daftarBerkas.map((item) => (
+                {berkasFiltered.length > 0 ? (
+                  berkasFiltered.map((item) => (
                     <tr
                       key={item.id}
                       className="hover:bg-slate-50/60 transition"
@@ -209,8 +268,9 @@ export default function HalamanValidasiBerkasRT() {
                       colSpan={6}
                       className="p-8 text-center text-slate-400 text-xs"
                     >
-                      Tidak ada antrean berkas masuk pada periode tahun{" "}
-                      {tahunPeriode}.
+                      {searchTerm || filterRT !== "SEMUA"
+                        ? "Tidak ada berkas yang sesuai dengan kriteria pencarian/filter RT."
+                        : `Tidak ada antrean berkas masuk pada periode tahun ${tahunPeriode}.`}
                     </td>
                   </tr>
                 )}
