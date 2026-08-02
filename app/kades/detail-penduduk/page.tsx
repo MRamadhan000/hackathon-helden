@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import KadesHeader from "@/components/kades/KadesHeader";
+import { getDemografiPendudukPerRT } from "@/services/core/demografi.service";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -160,38 +161,58 @@ function DetailPendudukContent() {
   const searchParams = useSearchParams();
   const tahunPeriode = searchParams.get("tahun") || "2026";
 
-  const [selectedRTId, setSelectedRTId] = useState<string>("rt-01");
+  const [listRT, setListRT] = useState<DataRT[]>([]);
+  const [selectedRTId, setSelectedRTId] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const listRT = useMemo(() => {
-    return (
-      mockDetailPendudukPerRT[tahunPeriode] || mockDetailPendudukPerRT["2026"]
-    );
+  // Fetch data real dari backend
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    getDemografiPendudukPerRT(tahunPeriode)
+      .then((data) => {
+        setListRT(data);
+        if (data.length > 0) {
+          setSelectedRTId(data[0].idRT);
+        }
+      })
+      .catch((err) => {
+        setError(err.message || "Gagal memuat data demografi");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, [tahunPeriode]);
 
   const rtAktif = useMemo(() => {
+    if (listRT.length === 0) return null;
     return listRT.find((rt) => rt.idRT === selectedRTId) || listRT[0];
   }, [listRT, selectedRTId]);
 
   // Data Grafik Tren RT Terpilih
-  const trendDataRT = {
-    labels: ["2022", "2023", "2024", "2025", "2026"],
-    datasets: [
-      {
-        label: `Pertumbuhan Penduduk ${rtAktif.namaRT}`,
-        data: rtAktif.trenPenduduk5Thn,
-        borderColor: "#2563eb",
-        backgroundColor: "rgba(37, 99, 235, 0.08)",
-        pointBackgroundColor: "#2563eb",
-        pointBorderColor: "#ffffff",
-        pointBorderWidth: 2,
-        pointRadius: 5,
-        borderWidth: 2.5,
-        tension: 0.35,
-        fill: true,
-      },
-    ],
-  };
+  const trendDataRT = useMemo(() => {
+    if (!rtAktif) return { labels: [], datasets: [] };
+    return {
+      labels: ["2022", "2023", "2024", "2025", "2026"],
+      datasets: [
+        {
+          label: `Pertumbuhan Penduduk ${rtAktif.namaRT}`,
+          data: rtAktif.trenPenduduk5Thn,
+          borderColor: "#2563eb",
+          backgroundColor: "rgba(37, 99, 235, 0.08)",
+          pointBackgroundColor: "#2563eb",
+          pointBorderColor: "#ffffff",
+          pointBorderWidth: 2,
+          pointRadius: 5,
+          borderWidth: 2.5,
+          tension: 0.35,
+          fill: true,
+        },
+      ],
+    };
+  }, [rtAktif]);
 
   const trendOptionsRT = {
     responsive: true,
@@ -220,12 +241,44 @@ function DetailPendudukContent() {
   };
 
   const wargaDisaring = useMemo(() => {
+    if (!rtAktif) return [];
     const q = searchQuery.toLowerCase().trim();
     if (!q) return rtAktif.daftarWarga;
     return rtAktif.daftarWarga.filter(
       (w) => w.nama.toLowerCase().includes(q) || w.nik.includes(q),
     );
   }, [rtAktif, searchQuery]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 text-slate-950 font-sans antialiased flex flex-col">
+        <KadesHeader tahunPeriode={tahunPeriode} setTahunPeriode={() => {}} />
+        <div className="flex-1 flex flex-col items-center justify-center py-20 space-y-4">
+          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-sm font-bold text-slate-500 animate-pulse">Menghitung sebaran data RT...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || listRT.length === 0) {
+    return (
+      <div className="min-h-screen bg-slate-50 text-slate-950 font-sans antialiased flex flex-col">
+        <KadesHeader tahunPeriode={tahunPeriode} setTahunPeriode={() => {}} />
+        <div className="flex-1 flex flex-col items-center justify-center py-20 space-y-4 text-center max-w-md mx-auto px-6">
+          <p className="text-3xl">⚠️</p>
+          <h3 className="text-base font-extrabold text-slate-900">Gagal Memuat Sebaran RT</h3>
+          <p className="text-xs text-slate-500">{error || "Belum ada wilayah RT yang terdaftar di database."}</p>
+          <Link href={`/kades/dashboard?tahun=${tahunPeriode}`} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition shadow-sm">
+            Kembali ke Dashboard
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Fallback safety (TypeScript assertion)
+  if (!rtAktif) return null;
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950 font-sans antialiased">
