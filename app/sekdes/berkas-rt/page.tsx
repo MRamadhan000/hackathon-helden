@@ -60,6 +60,8 @@ function HalamanValidasiBerkasRT() {
   } = useMutasi(tahunPeriode);
 
   const [filterStatus, setFilterStatus] = useState<StatusFilter>("Semua");
+  const [filterRT, setFilterRT] = useState<string>("Semua RT");
+  const [sortBy, setSortBy] = useState<"Terbaru" | "Terlama">("Terbaru");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedMutasiId, setSelectedMutasiId] = useState<string | null>(null);
   const [feedbackDraft, setFeedbackDraft] = useState("");
@@ -79,9 +81,12 @@ function HalamanValidasiBerkasRT() {
   const filteredData = useMemo(() => {
     const term = searchTerm.toLowerCase().trim();
 
-    return daftarMutasi.filter((item) => {
+    let result = daftarMutasi.filter((item) => {
       const matchStatus =
         filterStatus === "Semua" || (item.status || "PENDING") === filterStatus;
+
+      const matchRT =
+        filterRT === "Semua RT" || (item.clusterdesaId || "Unknown") === filterRT;
 
       const matchSearch =
         !term ||
@@ -92,9 +97,22 @@ function HalamanValidasiBerkasRT() {
         item.feedbackSekdes?.toLowerCase().includes(term) ||
         item.parent?.toLowerCase().includes(term);
 
-      return matchStatus && matchSearch;
+      return matchStatus && matchRT && matchSearch;
     });
-  }, [daftarMutasi, filterStatus, searchTerm]);
+
+    if (sortBy === "Terbaru") {
+      result = result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    } else if (sortBy === "Terlama") {
+      result = result.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    }
+
+    return result;
+  }, [daftarMutasi, filterStatus, filterRT, sortBy, searchTerm]);
+
+  const uniqueRTs = useMemo(() => {
+    const rts = new Set(daftarMutasi.map(item => item.clusterdesaId || "Unknown"));
+    return Array.from(rts).sort();
+  }, [daftarMutasi]);
 
   const pendingCount = useMemo(() => {
     return daftarMutasi.filter(
@@ -233,24 +251,21 @@ function HalamanValidasiBerkasRT() {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
-            <div className="relative flex-1 max-w-xl">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400 text-xs">
-                🔍
-              </span>
-              <input
-                type="text"
-                placeholder="Cari nama, NIK, jenis mutasi, catatan, atau parent..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-indigo-600 focus:bg-white transition"
-              />
-            </div>
+          <div className="flex flex-col gap-4 pt-2">
+            <div className="flex flex-col md:flex-row gap-3">
+              <div className="relative flex-1">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400 text-xs">
+                  🔍
+                </span>
+                <input
+                  type="text"
+                  placeholder="Cari nama, NIK, jenis mutasi, catatan, atau parent..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-indigo-600 focus:bg-white transition"
+                />
+              </div>
 
-            <div className="flex items-center gap-2 shrink-0">
-              <label className="text-xs font-bold text-slate-500">
-                Filter Status:
-              </label>
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value as StatusFilter)}
@@ -261,6 +276,28 @@ function HalamanValidasiBerkasRT() {
                     {status === "Semua" ? "Semua Status" : status}
                   </option>
                 ))}
+              </select>
+
+              <select
+                value={filterRT}
+                onChange={(e) => setFilterRT(e.target.value)}
+                className="bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 py-2 px-3 rounded-xl focus:outline-none focus:border-indigo-600 cursor-pointer"
+              >
+                <option value="Semua RT">Semua RT</option>
+                {uniqueRTs.map((rt) => (
+                  <option key={rt} value={rt}>
+                    {rt === "Unknown" ? "RT Tidak Diketahui" : `RT/Cluster: ${rt}`}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 py-2 px-3 rounded-xl focus:outline-none focus:border-indigo-600 cursor-pointer"
+              >
+                <option value="Terbaru">Waktu Lapor: Terbaru</option>
+                <option value="Terlama">Waktu Lapor: Terlama</option>
               </select>
             </div>
           </div>

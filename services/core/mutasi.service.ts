@@ -64,17 +64,14 @@ export async function getMutasiList(
   }
 
   if (createdByUserId) {
-    try {
-      query = query.or(`created_by_user_id.eq.${createdByUserId},created_by.eq.${createdByUserId}`);
-    } catch {
-      query = query.eq("created_by", createdByUserId);
-    }
+    query = query.eq("created_by", createdByUserId);
   }
 
   const { data, error } = await query;
   if (error) throw error;
   return (data || []).map(mapMutasiFromDb);
 }
+
 
 // 2. Dapatkan detail pengajuan mutasi berdasarkan ID
 export async function getMutasiById(id: string): Promise<MutasiPengajuan | null> {
@@ -182,46 +179,72 @@ export async function verifyMutasiSekdes(
 
   if (error) throw error;
 
-  // C. Jika APPROVED -> Tambahkan data warga baru ke tweb_penduduk (Goal Mutasi)
+  // C. Jika APPROVED -> Update / Insert data ke tweb_penduduk (Goal Mutasi)
   if (isApproved) {
-    if (currentMutasi.jenisMutasi === "Warga Baru") {
+    // Pastikan mengambil data mutasi pengajuan paling TERAKHIR berdasarkan NIK (mengakomodasi sistem pengajuan ulang / resubmit)
+    const { data: latestRow } = await supabase
+      .from("tweb_mutasi_pengajuan")
+      .select("*")
+      .eq("nik", currentMutasi.nik)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const targetMutasi = latestRow ? mapMutasiFromDb(latestRow) : currentMutasi;
+
+    if (targetMutasi.jenisMutasi === "Warga Baru") {
       const { error: pendudukError } = await supabase.from("tweb_penduduk").insert({
         id: crypto.randomUUID(),
-        nik: currentMutasi.nik,
-        nama: currentMutasi.nama,
-        tempat_lahir: currentMutasi.tempatLahir,
-        tanggal_lahir: currentMutasi.tanggalLahir,
-        jenis_kelamin: currentMutasi.jenisKelamin,
-        agama: currentMutasi.agama,
+        nik: targetMutasi.nik,
+        nama: targetMutasi.nama,
+        tempat_lahir: targetMutasi.tempatLahir,
+        tanggal_lahir: targetMutasi.tanggalLahir,
+        jenis_kelamin: targetMutasi.jenisKelamin,
+        agama: targetMutasi.agama || "Islam",
         status_penduduk: "Tetap",
         status_verifikasi_dukcapil: "Terverifikasi",
-        keluarga_id: currentMutasi.keluargaId,
-        clusterdesa_id: currentMutasi.clusterdesaId,
+        keluarga_id: targetMutasi.keluargaId,
+        clusterdesa_id: targetMutasi.clusterdesaId,
       });
 
       if (pendudukError) {
         console.error("Gagal menambahkan warga baru ke tweb_penduduk:", pendudukError);
       }
-    } else if (currentMutasi.jenisMutasi === "Non-Aktif") {
-      // Update status_penduduk di tweb_penduduk menjadi Non-Aktif/Pindah/Meninggal
-      await supabase
+    } else if (targetMutasi.jenisMutasi === "Non-Aktif") {
+      // Jika keterangan mengandung "Meninggal", status_penduduk diset ke "Meninggal". Otherwise "Pindah".
+      const isMeninggal = (targetMutasi.keterangan || "").toLowerCase().includes("meninggal");
+      const statusPendudukBaru = isMeninggal ? "Meninggal" : "Pindah";
+
+      const { error: updateNonAktifErr } = await supabase
         .from("tweb_penduduk")
-        .update({ status_penduduk: "Pindah" })
-        .eq("nik", currentMutasi.nik);
-    } else if (currentMutasi.jenisMutasi === "Koreksi Data") {
-      // Update data di tweb_penduduk sesuai data revisi mutasi
-      await supabase
-        .from("tweb_penduduk")
-        .update({
-          nama: currentMutasi.nama,
-          tempat_lahir: currentMutasi.tempatLahir,
-          tanggal_lahir: currentMutasi.tanggalLahir,
-          jenis_kelamin: currentMutasi.jenisKelamin,
-          agama: currentMutasi.agama,
-          keluarga_id: currentMutasi.keluargaId || undefined,
-          clusterdesa_id: currentMutasi.clusterdesaId || undefined,
-        })
-        .eq("nik", currentMutasi.nik);
+        .update({ status_penduduk: statusPendudukBaru })
+        .eq("nik", targetMutasi.nik);
+
+      if (updateNonAktifErr) {
+        console.error("Gagal mengupdate status penduduk non-aktif/meninggal:", updateNonAktifErr);
+      }
+    } else if (targetMutasi.jenisMutasi === "Koreksi Data") {
+      // Update data di tweb_penduduk berdasarkan data mutasi pengajuan paling terakhir
+      const updateFields: Record<string, any> = {};
+
+      if (targetMutasi.nama) updateFields.nama = targetMutasi.nama;
+      if (targetMutasi.tempatLahir) updateFields.tempat_lahir = targetMutasi.tempatLahir;
+      if (targetMutasi.tanggalLahir) updateFields.tanggal_lahir = targetMutasi.tanggalLahir;
+      if (targetMutasi.jenisKelamin) updateFields.jenis_kelamin = targetMutasi.jenisKelamin;
+      if (targetMutasi.agama) updateFields.agama = targetMutasi.agama;
+      if (targetMutasi.keluargaId) updateFields.keluarga_id = targetMutasi.keluargaId;
+      if (targetMutasi.clusterdesaId) updateFields.clusterdesa_id = targetMutasi.clusterdesaId;
+
+      if (Object.keys(updateFields).length > 0) {
+        const { error: updateKoreksiErr } = await supabase
+          .from("tweb_penduduk")
+          .update(updateFields)
+          .eq("nik", targetMutasi.nik);
+
+        if (updateKoreksiErr) {
+          console.error("Gagal mengupdate koreksi data di tweb_penduduk:", updateKoreksiErr);
+        }
+      }
     }
   }
 
@@ -310,3 +333,15 @@ export async function getMutasiLogs(mutasiId: string): Promise<MutasiLog[]> {
   if (error) throw error;
   return (data || []).map(mapMutasiLogFromDb);
 }
+
+// 7. Hapus / Batalkan Pengajuan Mutasi
+export async function deleteMutasi(id: string): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("tweb_mutasi_pengajuan")
+    .delete()
+    .eq("id", id);
+
+  if (error) throw error;
+}
+
