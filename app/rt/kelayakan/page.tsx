@@ -23,34 +23,47 @@ function KelayakanContent() {
 
   // Real Supabase Connection via Custom Hooks
   const { user: currentUser, isLoading: isAuthLoading } = useAuth();
-  const { data: realSurveiList, isLoading, submit: submitSurveiHook } = useSurveiKelayakan(tahunPeriode, currentUser?.id ?? null);
+  const {
+    data: realSurveiList,
+    isLoading,
+    submit: submitSurveiHook,
+  } = useSurveiKelayakan(tahunPeriode, currentUser?.id ?? null);
   const { data: realPendudukList } = usePenduduk();
 
   // Map Real Data Warga ke Format PendudukRT
   const daftarWarga: PendudukRT[] = useMemo(() => {
-    return (realPendudukList || []).map((p) => ({
-      id: p.id,
-      nik: p.nik,
-      nama: p.nama,
-      clusterdesaId: p.clusterdesaId,
-      jenisKelamin: (p.jenisKelamin === "P" ? "P" : "L") as "L" | "P",
-      tempatLahir: p.tempat_lahir,
-      tanggalLahir: p.tanggal_lahir,
-      statusPenduduk: (["Tetap", "Pindah", "Meninggal"].includes(p.statusPenduduk)
-        ? p.statusPenduduk
-        : "Tetap") as "Tetap" | "Pindah" | "Meninggal",
-      statusVerifikasiDukcapil: (p.statusVerifikasiDukcapil === "Anomali / Unverified"
-        ? "Anomali / Unverified"
-        : "Terverifikasi") as "Terverifikasi" | "Anomali / Unverified",
-      terakhirDiperbarui: "-",
-    }));
-  }, [realPendudukList]);
+    const areaId = currentUser?.clusterdesaId;
+
+    return (realPendudukList || [])
+      .filter((p) => p.clusterdesaId === areaId)
+      .map((p) => ({
+        id: p.id,
+        nik: p.nik,
+        nama: p.nama,
+        clusterdesaId: p.clusterdesaId,
+        jenisKelamin: (p.jenisKelamin === "P" ? "P" : "L") as "L" | "P",
+        tempatLahir: p.tempat_lahir,
+        tanggalLahir: p.tanggal_lahir,
+        statusPenduduk: (["Tetap", "Pindah", "Meninggal"].includes(
+          p.statusPenduduk,
+        )
+          ? p.statusPenduduk
+          : "Tetap") as "Tetap" | "Pindah" | "Meninggal",
+        statusVerifikasiDukcapil: (p.statusVerifikasiDukcapil ===
+        "Anomali / Unverified"
+          ? "Anomali / Unverified"
+          : "Terverifikasi") as "Terverifikasi" | "Anomali / Unverified",
+        terakhirDiperbarui: "-",
+      }));
+  }, [realPendudukList, currentUser?.clusterdesaId]);
 
   // Map Real Data Survei Kelayakan Supabase
   const riwayatSurvei = useMemo(() => {
     return (realSurveiList || []).map((item) => ({
       id: item.id,
-      tanggal: item.createdAt ? new Date(item.createdAt).toLocaleDateString("id-ID") : "-",
+      tanggal: item.createdAt
+        ? new Date(item.createdAt).toLocaleDateString("id-ID")
+        : "-",
       nik: item.nik,
       nama: item.nama,
       skor: item.skor,
@@ -90,7 +103,9 @@ function KelayakanContent() {
       const pendudukId = wargaReferensi?.id;
 
       if (!pendudukId) {
-        throw new Error("Penduduk tidak ditemukan berdasarkan NIK yang dipilih.");
+        throw new Error(
+          "Penduduk tidak ditemukan berdasarkan NIK yang dipilih.",
+        );
       }
 
       await submitSurveiHook(
@@ -110,7 +125,7 @@ function KelayakanContent() {
           tahunPeriode: tahunPeriode,
         },
         currentUser.id,
-        "RT"
+        "RT",
       );
       alert("Hasil survei Prodeskel berhasil dikirim ke Sekretaris Desa!");
       setShowModal(false);
@@ -264,7 +279,9 @@ function KelayakanContent() {
                       <th className="px-5 py-3">Nama Warga</th>
                       <th className="px-5 py-3">Indikator Detail</th>
                       <th className="px-5 py-3">Skor Kelayakan</th>
-                      <th className="px-5 py-3 text-right">Kategori / Status</th>
+                      <th className="px-5 py-3 text-right">
+                        Kategori / Status
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
@@ -326,7 +343,8 @@ function KelayakanContent() {
 
           {/* Footer */}
           <div className="px-4 sm:px-5 py-3 bg-slate-50/50 border-t border-slate-100 text-[11px] text-slate-500 font-medium">
-            Menampilkan {filteredData.length} dari {riwayatSurvei.length} data survei
+            Menampilkan {filteredData.length} dari {riwayatSurvei.length} data
+            survei
           </div>
         </div>
       </div>
