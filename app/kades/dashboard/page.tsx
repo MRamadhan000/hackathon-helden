@@ -4,6 +4,8 @@ import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import KadesHeader from "@/components/kades/KadesHeader";
+import ExecutiveStatCards from "@/components/kades/ExecutiveStatCards";
+import SkHistoryLogTable from "@/components/kades/SkHistoryLogTable";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -26,12 +28,13 @@ ChartJS.register(
   Filler,
 );
 
-// Mock Data Eksekutif Kades Per Tahun (Diperbarui 5 Tahun Terakhir: 2022 - 2026)
+// Mock Data Eksekutif Kades Per Tahun (2022 - 2026)
 const mockExecutiveData: Record<string, any> = {
   "2026": {
     totalWarga: "3.412",
     totalKpmAktif: 245,
-    paguAnggaranBansos: "Rp 270.000.000",
+    paguAnggaranBansos: "Rp 360.000.000",
+    realisasiAnggaran: "Rp 270.000.000",
     sisaPaguSiskeudes: "Rp 90.000.000",
     statusAlurBansos: "Tersendat di Verifikasi RT",
     draftSkSiapTtd: [
@@ -44,6 +47,47 @@ const mockExecutiveData: Record<string, any> = {
         jumlahKpm: 25,
         totalNominal: "Rp 90.000.000",
         status: "Menunggu Tanda Tangan Kades",
+        daftarKpm: [
+          {
+            nik: "3507011234560001",
+            nama: "Budi Santoso",
+            rt: "RT 03 / RW 01",
+            nominal: "Rp 300.000 / Bln",
+          },
+          {
+            nik: "3507019876540002",
+            nama: "Siti Aminah",
+            rt: "RT 01 / RW 01",
+            nominal: "Rp 300.000 / Bln",
+          },
+          {
+            nik: "3507011122330005",
+            nama: "Slamet Riyadi",
+            rt: "RT 03 / RW 01",
+            nominal: "Rp 300.000 / Bln",
+          },
+        ],
+      },
+    ],
+    riwayatSkSelesai: [
+      {
+        id: "sk-hist-01",
+        nomorDraft: "SK/DSO/2026/003",
+        tentang: "Penetapan 30 KPM Bansos BLT-DD Tahap II",
+        pengusul: "Ibu Siti (Sekretaris Desa)",
+        waktuKeputusan: "15/05/2026 • 10:30 WIB",
+        jumlahKpm: 30,
+        totalNominal: "Rp 90.000.000",
+        statusKeputusan: "Approved",
+        catatan: "SK Sah & Resmi Masuk Siskeudes",
+        daftarKpm: [
+          {
+            nik: "3507011234560001",
+            nama: "Budi Santoso",
+            rt: "RT 03 / RW 01",
+            nominal: "Rp 300.000 / Bln",
+          },
+        ],
       },
     ],
     sebaranKpmRt: [
@@ -58,65 +102,48 @@ const mockExecutiveData: Record<string, any> = {
     totalWarga: "3.350",
     totalKpmAktif: 260,
     paguAnggaranBansos: "Rp 310.000.000",
+    realisasiAnggaran: "Rp 310.000.000",
     sisaPaguSiskeudes: "Rp 0",
     statusAlurBansos: "Selesai (Terkunci)",
     draftSkSiapTtd: [],
-    sebaranKpmRt: [
-      { rt: "RT 01 / RW 01", jumlahKpm: 45, kuotaPersen: 100 },
-      { rt: "RT 02 / RW 01", jumlahKpm: 40, kuotaPersen: 100 },
-      { rt: "RT 03 / RW 01", jumlahKpm: 60, kuotaPersen: 100 },
-      { rt: "RT 04 / RW 01", jumlahKpm: 65, kuotaPersen: 100 },
-      { rt: "RT 05 / RW 01", jumlahKpm: 50, kuotaPersen: 100 },
-    ],
+    riwayatSkSelesai: [],
+    sebaranKpmRt: [],
   },
   "2024": {
     totalWarga: "3.280",
     totalKpmAktif: 280,
     paguAnggaranBansos: "Rp 336.000.000",
+    realisasiAnggaran: "Rp 336.000.000",
     sisaPaguSiskeudes: "Rp 0",
     statusAlurBansos: "Selesai (Terkunci)",
     draftSkSiapTtd: [],
-    sebaranKpmRt: [
-      { rt: "RT 01 / RW 01", jumlahKpm: 48, kuotaPersen: 100 },
-      { rt: "RT 02 / RW 01", jumlahKpm: 42, kuotaPersen: 100 },
-      { rt: "RT 03 / RW 01", jumlahKpm: 62, kuotaPersen: 100 },
-      { rt: "RT 04 / RW 01", jumlahKpm: 68, kuotaPersen: 100 },
-      { rt: "RT 05 / RW 01", jumlahKpm: 52, kuotaPersen: 100 },
-    ],
+    riwayatSkSelesai: [],
+    sebaranKpmRt: [],
   },
   "2023": {
     totalWarga: "3.195",
     totalKpmAktif: 268,
     paguAnggaranBansos: "Rp 322.000.000",
+    realisasiAnggaran: "Rp 322.000.000",
     sisaPaguSiskeudes: "Rp 0",
     statusAlurBansos: "Selesai (Terkunci)",
     draftSkSiapTtd: [],
-    sebaranKpmRt: [
-      { rt: "RT 01 / RW 01", jumlahKpm: 46, kuotaPersen: 100 },
-      { rt: "RT 02 / RW 01", jumlahKpm: 39, kuotaPersen: 100 },
-      { rt: "RT 03 / RW 01", jumlahKpm: 58, kuotaPersen: 100 },
-      { rt: "RT 04 / RW 01", jumlahKpm: 64, kuotaPersen: 100 },
-      { rt: "RT 05 / RW 01", jumlahKpm: 49, kuotaPersen: 100 },
-    ],
+    riwayatSkSelesai: [],
+    sebaranKpmRt: [],
   },
   "2022": {
     totalWarga: "3.120",
     totalKpmAktif: 252,
     paguAnggaranBansos: "Rp 302.400.000",
+    realisasiAnggaran: "Rp 302.400.000",
     sisaPaguSiskeudes: "Rp 0",
     statusAlurBansos: "Selesai (Terkunci)",
     draftSkSiapTtd: [],
-    sebaranKpmRt: [
-      { rt: "RT 01 / RW 01", jumlahKpm: 44, kuotaPersen: 100 },
-      { rt: "RT 02 / RW 01", jumlahKpm: 36, kuotaPersen: 100 },
-      { rt: "RT 03 / RW 01", jumlahKpm: 54, kuotaPersen: 100 },
-      { rt: "RT 04 / RW 01", jumlahKpm: 61, kuotaPersen: 100 },
-      { rt: "RT 05 / RW 01", jumlahKpm: 46, kuotaPersen: 100 },
-    ],
+    riwayatSkSelesai: [],
+    sebaranKpmRt: [],
   },
 };
 
-// Mock Master Sampling Data Warga Per Tahun untuk Drawer Setengah Layar
 const mockMasterPendudukDetail: Record<string, any[]> = {
   "2026": [
     {
@@ -153,32 +180,8 @@ const mockMasterPendudukDetail: Record<string, any[]> = {
       dukcapil: "Terverifikasi",
     },
   ],
-  "2025": [
-    {
-      id: "w-2025-1",
-      nik: "3507011234560001",
-      nama: "Budi Santoso",
-      jenisKelamin: "L",
-      tempatLahir: "Kab. Malang",
-      tanggalLahir: "1985-05-12",
-      statusPenduduk: "Tetap",
-      rt: "RT 03 / RW 01",
-      dukcapil: "Terverifikasi",
-    },
-  ],
-  "2024": [
-    {
-      id: "w-2024-1",
-      nik: "3507019876540002",
-      nama: "Siti Aminah",
-      jenisKelamin: "P",
-      tempatLahir: "Kota Surabaya",
-      tanggalLahir: "1958-08-24",
-      statusPenduduk: "Tetap",
-      rt: "RT 01 / RW 01",
-      dukcapil: "Terverifikasi",
-    },
-  ],
+  "2025": [],
+  "2024": [],
   "2023": [],
   "2022": [],
 };
@@ -188,8 +191,13 @@ function DashboardKadesContent() {
   const router = useRouter();
 
   const [tahunPeriode, setTahunPeriodeState] = useState("2026");
+  const [modalCardType, setModalCardType] = useState<string | null>(null);
+  const [selectedSkDetail, setSelectedSkDetail] = useState<any | null>(null);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const [pdfPreviewData, setPdfPreviewData] = useState<any | null>(null);
+  const [showCetakSuccessModal, setShowCetakSuccessModal] = useState(false);
 
-  // State Drawer Setengah Layar
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerTitle, setDrawerTitle] = useState("");
   const [drawerData, setDrawerData] = useState<any[]>([]);
@@ -202,9 +210,7 @@ function DashboardKadesContent() {
       localStorage.setItem("kades_tahun_periode", queryTahun);
     } else {
       const savedTahun = localStorage.getItem("kades_tahun_periode");
-      if (savedTahun) {
-        setTahunPeriodeState(savedTahun);
-      }
+      if (savedTahun) setTahunPeriodeState(savedTahun);
     }
   }, [searchParams]);
 
@@ -216,25 +222,76 @@ function DashboardKadesContent() {
 
   const dataKades =
     mockExecutiveData[tahunPeriode] || mockExecutiveData["2026"];
-
   const [notif, setNotif] = useState("");
   const [draftList, setDraftList] = useState(dataKades.draftSkSiapTtd);
+  const [riwayatList, setRiwayatList] = useState<any[]>(
+    dataKades.riwayatSkSelesai || [],
+  );
 
   useEffect(() => {
     setDraftList(dataKades.draftSkSiapTtd);
+    setRiwayatList(dataKades.riwayatSkSelesai || []);
   }, [tahunPeriode]);
 
-  const handleTandaTanganSk = (id: string, nomor: string) => {
-    setDraftList((prev: any[]) => prev.filter((item) => item.id !== id));
+  const handleApproveSk = (skItem: any) => {
+    setDraftList((prev: any[]) => prev.filter((item) => item.id !== skItem.id));
+    const now = new Date();
+    const formattedDate = `${now.getDate().toString().padStart(2, "0")}/${(now.getMonth() + 1).toString().padStart(2, "0")}/${now.getFullYear()} • ${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")} WIB`;
+
+    const newHistoryItem = {
+      id: `hist-${Date.now()}`,
+      nomorDraft: skItem.nomorDraft,
+      tentang: skItem.tentang,
+      pengusul: skItem.pengusul,
+      waktuKeputusan: formattedDate,
+      jumlahKpm: skItem.jumlahKpm,
+      totalNominal: skItem.totalNominal,
+      statusKeputusan: "Approved",
+      catatan: "Disetujui Kades & Diterbitkan PDF Resmi",
+      daftarKpm: skItem.daftarKpm || [],
+    };
+
+    setRiwayatList((prev) => [newHistoryItem, ...prev]);
+    setPdfPreviewData(skItem);
+    setSelectedSkDetail(null);
     setNotif(
-      `Sukses: Dokumen ${nomor} berhasil ditandatangani dan terbit sebagai SK Penetapan Resmi Kades!`,
+      `✓ Sukses: Dokumen ${skItem.nomorDraft} disetujui! Dokumen PDF Simulasi resmi diterbitkan dan dicatat dalam arsip log.`,
     );
-    setTimeout(() => setNotif(""), 5000);
   };
 
-  // 1. SUMBU X: 5 TAHUN TERAKHIR (2022 - 2026)
-  const limaTahunTerakhir = ["2022", "2023", "2024", "2025", "2026"];
+  const handleConfirmReject = () => {
+    if (!selectedSkDetail) return;
+    const skItem = selectedSkDetail;
+    const nomor = skItem.nomorDraft;
 
+    setDraftList((prev: any[]) => prev.filter((item) => item.id !== skItem.id));
+    const now = new Date();
+    const formattedDate = `${now.getDate().toString().padStart(2, "0")}/${(now.getMonth() + 1).toString().padStart(2, "0")}/${now.getFullYear()} • ${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")} WIB`;
+
+    const newHistoryItem = {
+      id: `hist-${Date.now()}`,
+      nomorDraft: skItem.nomorDraft,
+      tentang: skItem.tentang,
+      pengusul: skItem.pengusul,
+      waktuKeputusan: formattedDate,
+      jumlahKpm: skItem.jumlahKpm,
+      totalNominal: skItem.totalNominal,
+      statusKeputusan: "Rejected",
+      catatan: rejectReason || "Perlu penyesuaian ulang kuota KPM",
+      daftarKpm: skItem.daftarKpm || [],
+    };
+
+    setRiwayatList((prev) => [newHistoryItem, ...prev]);
+    setShowRejectModal(false);
+    setSelectedSkDetail(null);
+    setNotif(
+      `✕ Penolakan Dikirim ke Sekdes: Dokumen ${nomor} ditolak dengan alasan: "${rejectReason || "Perlu penyesuaian ulang kuota KPM"}" dan dicatat dalam arsip.`,
+    );
+    setRejectReason("");
+  };
+
+  // CONFIG TREN PERTUMBUHAN DENGAN GAYA PRESISI SAMA PERSIS DENGAN SEBELUMNYA
+  const limaTahunTerakhir = ["2022", "2023", "2024", "2025", "2026"];
   const trendPendudukData = {
     labels: limaTahunTerakhir,
     datasets: [
@@ -261,17 +318,14 @@ function DashboardKadesContent() {
     ],
   };
 
-  // CONFIGURATION CHART DENGAN TOOLTIP TERANG & SUMBU Y RENGGANG PROPOSIONAL
   const trendPendudukOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    // CALLBACK KLIK PADA TITIK GRAFIK UNTUK MEMBUKA DRAWER SETENGAH LAYAR
     onClick: (event: any, elements: any[]) => {
       if (elements && elements.length > 0) {
         const index = elements[0].index;
         const tahunTerpilih = limaTahunTerakhir[index];
         const dataJiwa = mockExecutiveData[tahunTerpilih]?.totalWarga || "0";
-
         setDrawerTitle(
           `Master Data Warga Tahun ${tahunTerpilih} (${dataJiwa} Jiwa)`,
         );
@@ -281,7 +335,6 @@ function DashboardKadesContent() {
     },
     plugins: {
       legend: { display: false },
-      // 2. TOOLTIP BERWARNA TERANG (LIGHT MODE)
       tooltip: {
         backgroundColor: "#ffffff",
         titleColor: "#0f172a",
@@ -307,13 +360,12 @@ function DashboardKadesContent() {
           color: "#475569",
         },
       },
-      // 3. SUMBU Y DIBUAT DENGAN INTERVAL RENGGANG & PROPOSIONAL
       y: {
         suggestedMin: 3000,
         suggestedMax: 3500,
         grid: { color: "#f1f5f9" },
         ticks: {
-          stepSize: 100, // Memberikan jarak renggang yang pas antar interval
+          stepSize: 100,
           font: { size: 10, weight: "normal" as const },
           color: "#94a3b8",
           callback: (val: any) => `${val.toLocaleString("id-ID")} Jiwa`,
@@ -331,7 +383,6 @@ function DashboardKadesContent() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950 font-sans antialiased relative">
-      {/* HEADER EKSEKUTIF KADES */}
       <KadesHeader
         tahunPeriode={tahunPeriode}
         setTahunPeriode={setTahunPeriode}
@@ -339,12 +390,18 @@ function DashboardKadesContent() {
 
       <main className="max-w-7xl mx-auto px-6 lg:px-12 py-8 space-y-8">
         {notif && (
-          <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-950 rounded-xl text-xs font-bold shadow-xs">
-            {notif}
+          <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-950 rounded-xl text-xs font-bold shadow-xs flex items-center justify-between">
+            <span>{notif}</span>
+            <button
+              onClick={() => setNotif("")}
+              className="text-slate-400 font-bold cursor-pointer"
+            >
+              ✕
+            </button>
           </div>
         )}
 
-        {/* BANNER SELAMAT DATANG KADES */}
+        {/* BANNER KADES */}
         <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-50 text-amber-900 border border-amber-200/80 rounded-full text-xs font-bold mb-1">
@@ -369,65 +426,14 @@ function DashboardKadesContent() {
           </div>
         </div>
 
-        {/* 1. KARTU ANGKA KUNCI */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          <Link
-            href={`/kades/detail-penduduk?tahun=${tahunPeriode}`}
-            className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md hover:border-blue-500/50 transition-all duration-200 space-y-2 block group cursor-pointer"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                Total Penduduk Terdata
-              </span>
-            </div>
-            <p className="text-2xl font-black text-slate-950 group-hover:text-blue-600 transition-colors">
-              {dataKades.totalWarga}{" "}
-              <span className="text-xs font-bold text-slate-500">Jiwa</span>
-            </p>
-            <p className="text-[11px] text-slate-500">
-              Master Data RT Selesai Validasi
-            </p>
-          </Link>
+        {/* 1. KARTU STATISTIK UTAMA */}
+        <ExecutiveStatCards
+          dataKades={dataKades}
+          tahunPeriode={tahunPeriode}
+          onOpenModal={(t) => setModalCardType(t)}
+        />
 
-          <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-2">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-              Total KPM Bansos Aktif
-            </span>
-            <p className="text-2xl font-black text-blue-900">
-              {dataKades.totalKpmAktif}{" "}
-              <span className="text-xs font-bold text-slate-500">Keluarga</span>
-            </p>
-            <p className="text-[11px] text-slate-500">
-              Penerima Manfaat Sah SK Kades
-            </p>
-          </div>
-
-          <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-2">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-              Realisasi Anggaran Bansos
-            </span>
-            <p className="text-2xl font-black text-emerald-800">
-              {dataKades.paguAnggaranBansos}
-            </p>
-            <p className="text-[11px] text-slate-500">
-              Terserap dari Siskeudes
-            </p>
-          </div>
-
-          <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-2">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-              Sisa Pagu Tersedia (BLT)
-            </span>
-            <p className="text-2xl font-black text-amber-600">
-              {dataKades.sisaPaguSiskeudes}
-            </p>
-            <p className="text-[11px] text-slate-500">
-              Kuota Cadangan Pagu Tahun Ini
-            </p>
-          </div>
-        </div>
-
-        {/* GRAFIK TREN PERTUMBUHAN PENDUDUK (5 TAHUN TERAKHIR) */}
+        {/* 2. GRAFIK TREN PERTUMBUHAN PENDUDUK */}
         <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200/80 shadow-xs space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-4">
             <div>
@@ -455,8 +461,36 @@ function DashboardKadesContent() {
           </div>
         </div>
 
-        {/* 2. PANEL EKSEKUSI: TANDA TANGAN DRAFT SK KPM BANSOS */}
-        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200/80 shadow-xs space-y-6">
+        {/* BANNER NOTIFIKASI */}
+        {draftList.length > 0 && (
+          <div className="p-4 bg-amber-50 border border-amber-200 text-amber-950 rounded-2xl text-xs font-bold flex items-center justify-between shadow-xs animate-in fade-in duration-200">
+            <div className="flex items-center gap-2.5">
+              <span className="text-lg">🔔</span>
+              <div>
+                <strong className="text-amber-900 block text-xs">
+                  PEMBERITAHUAN VERIFIKASI KADES:
+                </strong>
+                <span className="text-slate-700 font-medium">
+                  Terdapat <strong>{draftList.length} Draft SK Bansos</strong>{" "}
+                  dari Sekdes yang memerlukan pengecekan & pengesahan Kepala
+                  Desa.
+                </span>
+              </div>
+            </div>
+            <a
+              href="#seksi-draft-sk"
+              className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-[11px] rounded-xl transition cursor-pointer shrink-0"
+            >
+              Tinjau Sekarang ↓
+            </a>
+          </div>
+        )}
+
+        {/* 3. PANEL EKSEKUSI PERSETUJUAN DRAFT SK */}
+        <div
+          id="seksi-draft-sk"
+          className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200/80 shadow-xs space-y-6"
+        >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-4">
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-50 text-amber-900 border border-amber-200/80 rounded-full text-xs font-bold mb-1">
@@ -503,15 +537,14 @@ function DashboardKadesContent() {
                     </p>
                   </div>
 
-                  <button
-                    onClick={() =>
-                      handleTandaTanganSk(item.id, item.nomorDraft)
-                    }
-                    className="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition shadow-md shadow-emerald-600/10 cursor-pointer shrink-0 flex items-center justify-center gap-2"
-                  >
-                    <span>✒️</span>
-                    <span>Sahkan & Tanda Tangan SK →</span>
-                  </button>
+                  <div className="flex items-center gap-2 self-start md:self-auto">
+                    <button
+                      onClick={() => setSelectedSkDetail(item)}
+                      className="px-4 py-2.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-bold rounded-xl transition cursor-pointer"
+                    >
+                      Lihat Detail →
+                    </button>
+                  </div>
                 </div>
               ))
             ) : (
@@ -523,7 +556,14 @@ function DashboardKadesContent() {
           </div>
         </div>
 
-        {/* 3. RADAR KETERJANGKAUAN BANSOS PER RT */}
+        {/* 4. RIWAYAT ARSIP LOG TABLE */}
+        <SkHistoryLogTable
+          riwayatList={riwayatList}
+          tahunPeriode={tahunPeriode}
+          onOpenPdf={(item) => setPdfPreviewData(item)}
+        />
+
+        {/* 5. RADAR SEBARAN RT */}
         <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200/80 shadow-xs space-y-6">
           <div>
             <h3 className="text-base font-bold text-slate-950">
@@ -551,16 +591,12 @@ function DashboardKadesContent() {
                       {rt.jumlahKpm} KPM
                     </span>
                   </div>
-
                   <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
                     <div
-                      className={`h-full rounded-full ${
-                        rt.kuotaPersen >= 90 ? "bg-amber-500" : "bg-emerald-500"
-                      }`}
+                      className={`h-full rounded-full ${rt.kuotaPersen >= 90 ? "bg-amber-500" : "bg-emerald-500"}`}
                       style={{ width: `${rt.kuotaPersen}%` }}
                     />
                   </div>
-
                   <p className="text-[10px] font-semibold text-slate-500 text-right">
                     Kapasitas Terpakai: {rt.kuotaPersen}%
                   </p>
@@ -575,12 +611,360 @@ function DashboardKadesContent() {
         </div>
       </main>
 
-      {/* 4. DRAWER SETENGAH LAYAR (SIDE PANEL OVERLAY 50% VIEWPORT) - DETAIL DATA TITIK GRAFIK */}
+      {/* MODAL POP-UP DETAIL CARD KUNCI */}
+      {modalCardType && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[85vh]">
+            <div className="p-5 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                {modalCardType === "penduduk" && "Rincian Data Penduduk Desa"}
+                {modalCardType === "kpm" && "Rincian Data KPM Bansos Aktif"}
+                {modalCardType === "anggaran" &&
+                  "Rincian Total Anggaran Bansos"}
+                {modalCardType === "realisasi" &&
+                  "Rincian Realisasi & Sisa Pagu"}
+              </h3>
+              <button
+                onClick={() => setModalCardType(null)}
+                className="w-7 h-7 rounded-full bg-slate-200 text-slate-600 font-bold text-xs flex items-center justify-center cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto space-y-4 text-xs text-slate-800">
+              {modalCardType === "penduduk" && (
+                <div className="space-y-3">
+                  <div className="p-3 bg-blue-50 rounded-xl border border-blue-100 text-blue-950">
+                    Total Penduduk Terdata:{" "}
+                    <strong>{dataKades.totalWarga} Jiwa</strong>
+                  </div>
+                  <p className="text-slate-600">
+                    Master data kependudukan bersumber dari hasil pendaftaran
+                    warga baru & mutasi yang telah divalidasi oleh pengurus RT
+                    dan Sekretaris Desa.
+                  </p>
+                </div>
+              )}
+              {modalCardType === "kpm" && (
+                <div className="space-y-3">
+                  <div className="p-3 bg-blue-50 rounded-xl border border-blue-100 text-blue-950">
+                    Total Penerima Bansos Sah:{" "}
+                    <strong>{dataKades.totalKpmAktif} Keluarga</strong>
+                  </div>
+                  <p className="text-slate-600">
+                    Seluruh KPM telah memenuhi kriteria kelayakan kuesioner DDK
+                    Prodeskel dan tercantum dalam Surat Keputusan Kepala Desa.
+                  </p>
+                </div>
+              )}
+              {modalCardType === "anggaran" && (
+                <div className="space-y-3">
+                  <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-100 text-emerald-950">
+                    Pagu Anggaran Total:{" "}
+                    <strong>{dataKades.paguAnggaranBansos}</strong>
+                  </div>
+                  <p className="text-slate-600">
+                    Alokasi dana bantuan sosial bersumber dari Dana Desa
+                    (Siskeudes) untuk memperkuat jaring pengaman sosial warga
+                    kurang mampu.
+                  </p>
+                </div>
+              )}
+              {modalCardType === "realisasi" && (
+                <div className="space-y-3">
+                  <div className="p-3 bg-amber-50 rounded-xl border border-amber-100 text-amber-950">
+                    Realisasi Terserap:{" "}
+                    <strong>{dataKades.realisasiAnggaran}</strong>
+                    <br />
+                    Sisa Cadangan Pagu:{" "}
+                    <strong>{dataKades.sisaPaguSiskeudes}</strong>
+                  </div>
+                  <p className="text-slate-600">
+                    Realisasi dihitung berdasarkan penyaluran bantuan sosial
+                    yang telah disahkan melalui SK Kepala Desa.
+                  </p>
+                </div>
+              )}
+            </div>
+            <div className="p-4 bg-slate-50 border-t border-slate-100 text-right">
+              <button
+                onClick={() => setModalCardType(null)}
+                className="px-4 py-2 bg-slate-900 text-white font-bold text-xs rounded-xl cursor-pointer"
+              >
+                Tutup Rincian
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL POP-UP DETAIL SK */}
+      {selectedSkDetail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-5 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
+                  DRAFT SK PERLU VERIFIKASI KADES
+                </span>
+                <h3 className="text-base font-black text-slate-950 mt-1">
+                  {selectedSkDetail.nomorDraft}
+                </h3>
+              </div>
+              <button
+                onClick={() => setSelectedSkDetail(null)}
+                className="w-8 h-8 rounded-full bg-slate-200/70 hover:bg-slate-200 text-slate-600 font-extrabold text-xs flex items-center justify-center cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto space-y-4 text-xs text-slate-800">
+              <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 space-y-1">
+                <span className="text-[10px] font-bold text-amber-800 uppercase block">
+                  Perihal Permohonan SK
+                </span>
+                <p className="font-extrabold text-slate-900">
+                  {selectedSkDetail.tentang}
+                </p>
+                <p className="text-[11px] text-slate-600">
+                  Pengusul: <strong>{selectedSkDetail.pengusul}</strong> •
+                  Kuota: <strong>{selectedSkDetail.jumlahKpm} KPM</strong> •
+                  Nominal:{" "}
+                  <strong className="text-emerald-800">
+                    {selectedSkDetail.totalNominal}
+                  </strong>
+                </p>
+              </div>
+              <div>
+                <h4 className="font-bold text-slate-900 mb-2">
+                  Daftar Calon Penerima Manfaat (KPM) Lampiran:
+                </h4>
+                <div className="border border-slate-200 rounded-xl overflow-hidden">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 border-b border-slate-200 text-slate-400 font-bold uppercase text-[10px]">
+                        <th className="p-2.5">No</th>
+                        <th className="p-2.5">Nama KPM / NIK</th>
+                        <th className="p-2.5">Wilayah RT</th>
+                        <th className="p-2.5 text-right">Alokasi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 font-medium">
+                      {selectedSkDetail.daftarKpm?.map(
+                        (kpm: any, i: number) => (
+                          <tr key={i} className="hover:bg-slate-50">
+                            <td className="p-2.5 font-bold text-slate-400">
+                              {i + 1}
+                            </td>
+                            <td className="p-2.5">
+                              <p className="font-bold text-slate-900">
+                                {kpm.nama}
+                              </p>
+                              <p className="font-mono text-[10px] text-slate-400">
+                                {kpm.nik}
+                              </p>
+                            </td>
+                            <td className="p-2.5 font-bold text-slate-700">
+                              {kpm.rt}
+                            </td>
+                            <td className="p-2.5 text-right font-mono font-bold text-emerald-800">
+                              {kpm.nominal}
+                            </td>
+                          </tr>
+                        ),
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-3">
+              <button
+                onClick={() => setShowRejectModal(true)}
+                className="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 font-bold text-xs rounded-xl transition cursor-pointer"
+              >
+                ✕ Reject / Tolak SK
+              </button>
+              <button
+                onClick={() => handleApproveSk(selectedSkDetail)}
+                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-2xs transition cursor-pointer flex items-center gap-1.5"
+              >
+                <span>✒️</span>
+                <span>Approve & Sahkan SK →</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL REJECT */}
+      {showRejectModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 p-5 space-y-4">
+            <h3 className="text-sm font-bold text-slate-900">
+              Alasan Penolakan / Catatan Revisi Sekdes
+            </h3>
+            <textarea
+              placeholder="Tuliskan catatan revisi..."
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              className="w-full h-24 p-3 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-rose-600"
+            />
+            <div className="flex items-center justify-end gap-2">
+              <button
+                onClick={() => setShowRejectModal(false)}
+                className="px-3.5 py-2 bg-slate-100 text-slate-600 font-bold text-xs rounded-xl"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleConfirmReject}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl cursor-pointer"
+              >
+                Kirim Penolakan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL PDF PREVIEW */}
+      {pdfPreviewData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-extrabold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                  DOKUMEN PDF RESMI (LABEL SIMULASI PERMENDAGRI)
+                </span>
+                <h3 className="text-sm font-bold text-slate-900 mt-0.5">
+                  SK Kepala Desa No: {pdfPreviewData.nomorDraft}
+                </h3>
+              </div>
+              <button
+                onClick={() => setPdfPreviewData(null)}
+                className="w-7 h-7 rounded-full bg-slate-200 text-slate-600 font-bold text-xs flex items-center justify-center cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto space-y-4 text-xs text-slate-900 leading-relaxed font-serif bg-white">
+              <div className="text-center border-b-2 border-slate-900 pb-3 space-y-0.5 font-sans">
+                <h4 className="font-extrabold text-sm uppercase text-slate-950">
+                  PEMERINTAH KABUPATEN MALANG
+                </h4>
+                <p className="font-bold text-xs uppercase text-slate-800">
+                  KECAMATAN KARANGPLOSO — DESA DIGITAL
+                </p>
+              </div>
+              <div className="text-center space-y-1 font-sans">
+                <h5 className="font-bold text-xs underline uppercase">
+                  KEPUTUSAN KEPALA DESA DIGITAL
+                </h5>
+                <p className="font-mono text-[11px] text-slate-600">
+                  Nomor: {pdfPreviewData.nomorDraft}
+                </p>
+                <p className="font-bold text-xs uppercase text-slate-900 pt-1">
+                  TENTANG {pdfPreviewData.tentang}
+                </p>
+              </div>
+              <div className="space-y-2 text-[11px] font-sans">
+                <p>
+                  <strong>MEMPERHATIKAN:</strong> Hasil musyawarah verifikasi
+                  berjenjang dari Pengurus RT, serta rekomendasi Sekretaris Desa
+                  atas kuesioner kelayakan Prodeskel DDK.
+                </p>
+                <p>
+                  <strong>MEMUTUSKAN:</strong> Menetapkan nama-nama terlampir
+                  sebagai penerima resmi bantuan sosial dialokasikan dari
+                  Siskeudes TA {tahunPeriode}.
+                </p>
+              </div>
+              <div className="pt-2 font-sans border-t border-slate-200">
+                <span className="text-[10px] font-bold text-slate-400 block mb-1">
+                  LAMPIRAN DAFTAR PENERIMA (TOTAL{" "}
+                  {pdfPreviewData.jumlahKpm || pdfPreviewData.daftarKpm?.length}{" "}
+                  KPM):
+                </span>
+                <div className="space-y-1 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                  {pdfPreviewData.daftarKpm?.map((kpm: any, i: number) => (
+                    <div
+                      key={i}
+                      className="flex justify-between text-[10px] border-b border-slate-200/60 pb-1 last:border-0"
+                    >
+                      <span>
+                        {i + 1}. {kpm.nama} ({kpm.rt})
+                      </span>
+                      <span className="font-bold text-emerald-900">
+                        {kpm.nominal}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="pt-6 font-sans flex justify-end">
+                <div className="text-center space-y-12">
+                  <p className="text-[11px]">
+                    Ditetapkan di Desa Digital,{" "}
+                    {pdfPreviewData.tanggalMasuk ||
+                      pdfPreviewData.waktuKeputusan}
+                    <br />
+                    <strong>KEPALA DESA DIGITAL</strong>
+                  </p>
+                  <p className="font-bold underline text-xs">( BPK. AHMAD )</p>
+                </div>
+              </div>
+            </div>
+            <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-[11px] text-slate-400 font-mono">
+                Nominal Total: {pdfPreviewData.totalNominal}
+              </span>
+              <button
+                onClick={() => {
+                  setPdfPreviewData(null);
+                  setShowCetakSuccessModal(true);
+                }}
+                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-2xs cursor-pointer flex items-center gap-1.5"
+              >
+                <span>🖨️</span>
+                <span>Cetak Surat PDF (Ke Siskeudes)</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL SUKSES CETAK */}
+      {showCetakSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-200 p-6 space-y-4 text-center">
+            <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 text-xl font-black flex items-center justify-center mx-auto">
+              ✓
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-base font-extrabold text-slate-900">
+                Simulasi Cetak PDF Berhasil Disimpan!
+              </h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Dokumen SK Penetapan telah diterbitkan dan dicatat dalam log
+                sistem Kades & Sekdes untuk ditindaklanjuti ke Siskeudes.
+              </p>
+            </div>
+            <button
+              onClick={() => setShowCetakSuccessModal(false)}
+              className="w-full py-2.5 bg-slate-900 text-white font-bold text-xs rounded-xl cursor-pointer"
+            >
+              Selesai & Tutup
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* DRAWER SETENGAH LAYAR UNTUK DETAIL TITIK GRAFIK TREN */}
       {drawerOpen && (
         <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/30 backdrop-blur-2xs transition-opacity">
           <div className="w-full md:w-1/2 bg-white h-full shadow-2xl p-6 sm:p-8 flex flex-col justify-between overflow-y-auto animate-in slide-in-from-right duration-300">
             <div className="space-y-6">
-              {/* DRAWER HEADER */}
               <div className="flex items-center justify-between border-b border-slate-100 pb-4">
                 <div>
                   <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-100">
@@ -592,13 +976,12 @@ function DashboardKadesContent() {
                 </div>
                 <button
                   onClick={() => setDrawerOpen(false)}
-                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-black text-sm flex items-center justify-center transition cursor-pointer"
+                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-black text-sm flex items-center justify-center cursor-pointer"
                 >
                   ✕
                 </button>
               </div>
 
-              {/* SEARCH FILTER */}
               <div className="relative">
                 <input
                   type="text"
@@ -609,7 +992,6 @@ function DashboardKadesContent() {
                 />
               </div>
 
-              {/* TABEL DATA LENGKAP PENDUDUK */}
               <div className="overflow-x-auto border border-slate-200/80 rounded-xl">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
@@ -638,7 +1020,7 @@ function DashboardKadesContent() {
                               {warga.tempatLahir}, {warga.tanggalLahir}
                             </p>
                             <p className="font-bold text-slate-400 text-[10px]">
-                              Jenis Kelamin: {warga.jenisKelamin}
+                              JK: {warga.jenisKelamin}
                             </p>
                           </td>
                           <td className="p-3">
@@ -648,11 +1030,7 @@ function DashboardKadesContent() {
                           </td>
                           <td className="p-3">
                             <span
-                              className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                                warga.statusPenduduk === "Tetap"
-                                  ? "bg-emerald-50 text-emerald-800 border border-emerald-100"
-                                  : "bg-blue-50 text-blue-800 border border-blue-100"
-                              }`}
+                              className={`px-2 py-0.5 rounded text-[10px] font-bold ${warga.statusPenduduk === "Tetap" ? "bg-emerald-50 text-emerald-800 border border-emerald-100" : "bg-blue-50 text-blue-800 border border-blue-100"}`}
                             >
                               {warga.statusPenduduk}
                             </span>
@@ -670,8 +1048,7 @@ function DashboardKadesContent() {
                           colSpan={5}
                           className="p-6 text-center text-slate-400 text-xs"
                         >
-                          Tidak ditemukan data warga terdaftar untuk titik
-                          grafik periode ini.
+                          Tidak ditemukan data warga.
                         </td>
                       </tr>
                     )}
@@ -680,7 +1057,6 @@ function DashboardKadesContent() {
               </div>
             </div>
 
-            {/* DRAWER FOOTER */}
             <div className="pt-6 border-t border-slate-100 flex items-center justify-between">
               <span className="text-xs text-slate-400">
                 Total Tampil:{" "}
@@ -688,7 +1064,7 @@ function DashboardKadesContent() {
               </span>
               <button
                 onClick={() => setDrawerOpen(false)}
-                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition cursor-pointer"
+                className="px-4 py-2 bg-slate-900 text-white text-xs font-bold rounded-xl cursor-pointer"
               >
                 Tutup Layar Detail
               </button>
