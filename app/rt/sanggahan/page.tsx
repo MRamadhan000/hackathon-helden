@@ -8,10 +8,12 @@ import CardSanggahan, {
   SanggahanKondisiRumah,
 } from "@/components/rt/CardSanggahan";
 import { useSanggahan } from "@/hooks/cores/useSanggahan";
+import { useAuth } from "@/hooks/useAuth";
 
 function SanggahanContent() {
   const searchParams = useSearchParams();
   const tahunPeriode = searchParams.get("tahun") || "2026";
+  const { user: currentUser } = useAuth();
 
   const [activeTab, setActiveTab] = useState<"rumah" | "penduduk">("rumah");
   const [notif, setNotif] = useState("");
@@ -73,7 +75,11 @@ function SanggahanContent() {
 
   const handleAjukanPenduduk = async (id: string) => {
     try {
-      await forwardToSekdes(id, "PENDUDUK", "rt-user-id");
+      if (!currentUser?.id) {
+        throw new Error("Session RT tidak ditemukan. Silakan login ulang.");
+      }
+
+      await forwardToSekdes(id, "PENDUDUK", currentUser.id);
       setNotif("Sukses: Permohonan perbaikan data warga berhasil diteruskan ke Sekdes!");
       setTimeout(() => setNotif(""), 4000);
     } catch (err) {
@@ -84,7 +90,11 @@ function SanggahanContent() {
 
   const handleAjukanRumah = async (id: string) => {
     try {
-      await forwardToSekdes(id, "RUMAH", "rt-user-id");
+      if (!currentUser?.id) {
+        throw new Error("Session RT tidak ditemukan. Silakan login ulang.");
+      }
+
+      await forwardToSekdes(id, "RUMAH", currentUser.id);
       setNotif("Sukses: Laporan sanggahan kondisi rumah warga berhasil diteruskan ke Sekdes!");
       setTimeout(() => setNotif(""), 4000);
     } catch (err) {

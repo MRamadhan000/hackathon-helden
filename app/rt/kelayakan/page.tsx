@@ -7,6 +7,7 @@ import FormSurveiKelayakan from "@/components/rt/FormSurveiKelayakan";
 import { PendudukRT } from "@/components/rt/TableWarga";
 import { useSurveiKelayakan } from "@/hooks/cores/useSurveiKelayakan";
 import { usePenduduk } from "@/hooks/cores/usePenduduk";
+import { useAuth } from "@/hooks/useAuth";
 
 const FILTER_KATEGORI = ["Semua", "Sangat Layak (Prioritas SK)", "Cukup Layak"];
 
@@ -23,6 +24,7 @@ function KelayakanContent() {
   // Real Supabase Connection via Custom Hooks
   const { data: realSurveiList, isLoading, submit: submitSurveiHook } = useSurveiKelayakan(tahunPeriode);
   const { data: realPendudukList } = usePenduduk();
+  const { user: currentUser } = useAuth();
 
   // Map Real Data Warga ke Format PendudukRT
   const daftarWarga: PendudukRT[] = useMemo(() => {
@@ -78,6 +80,11 @@ function KelayakanContent() {
   const handleSurveiSubmit = async (e: React.FormEvent, dataHasil: any) => {
     e.preventDefault();
     try {
+      if (!currentUser?.id) {
+        throw new Error("Session RT tidak ditemukan. Silakan login ulang.");
+      }
+
+      const detail = dataHasil?.detail || {};
       const nik = (dataHasil?.nik || selectedNik || "").trim();
       const wargaReferensi = daftarWarga.find((item) => item.nik === nik);
       const pendudukId = wargaReferensi?.id;
@@ -94,14 +101,15 @@ function KelayakanContent() {
           skor: Number(dataHasil?.skor) || 50,
           kategori: (dataHasil?.kategori as any) || "Cukup Layak",
           indikatorDetail: dataHasil?.indikator || "Survei Prodeskel DDK",
-          jenisDinding: dataHasil?.jenisDinding,
-          jenisLantai: dataHasil?.jenisLantai,
-          sanitasi: dataHasil?.sanitasi,
+          jenisDinding: detail?.jenisDinding,
+          jenisLantai: detail?.jenisLantai,
+          sumberAir: detail?.sumberAir,
+          sanitasi: detail?.sanitasi,
           adaLansia: dataHasil?.adaLansia || false,
           tipeProses: "OFFLINE",
           tahunPeriode: tahunPeriode,
         },
-        "rt-user-id",
+        currentUser.id,
         "RT"
       );
       alert("Hasil survei Prodeskel berhasil dikirim ke Sekretaris Desa!");
