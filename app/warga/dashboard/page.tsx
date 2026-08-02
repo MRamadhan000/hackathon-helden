@@ -1,22 +1,18 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function DashboardWarga() {
   const router = useRouter();
-  const [namaWarga, setNamaWarga] = useState("Bapak / Ibu Warga");
-
-  useEffect(() => {
-    const savedNama = localStorage.getItem("warga_nama");
-    if (savedNama) setNamaWarga(savedNama);
-  }, []);
+  const { user, logout } = useAuth();
+  const namaWarga = user?.nama || "Bapak / Ibu Warga";
 
   const handleLogout = () => {
-    localStorage.removeItem("warga_nik");
-    localStorage.removeItem("warga_nama");
-    router.push("/warga/login");
+    logout();
+    router.push("/auth/login/warga");
   };
 
   return (

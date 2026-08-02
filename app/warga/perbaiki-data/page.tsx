@@ -3,9 +3,13 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
+import { useSanggahan } from "@/hooks/cores/useSanggahan";
 
 export default function HalamanPerbaikiDataWarga() {
   const router = useRouter();
+  const { user } = useAuth();
+  const { submitPenduduk } = useSanggahan();
 
   const [jenisKetidakcocokan, setJenisKetidakcocokan] = useState(
     "Ejaan Nama / NIK Typo",
@@ -16,17 +20,38 @@ export default function HalamanPerbaikiDataWarga() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pesanSukses, setPesanSukses] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) {
+      alert("Anda harus login terlebih dahulu");
+      return;
+    }
+    
     setIsSubmitting(true);
 
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      const alasanLengkap = `Data Saat Ini: ${dataLama}\nUsulan Perbaikan: ${dataUsulanBaru}\n\nCatatan Warga: ${catatanPesan}`;
+      
+      await submitPenduduk({
+        pendudukId: user.id,
+        nikPelapor: user.nik,
+        namaPelapor: user.nama,
+        jenisKetidakcocokan,
+        alasanSanggahan: alasanLengkap,
+        tipeProses: "ONLINE",
+        reqMethod: "ONLINE"
+      }, user.id, "WARGA");
+
       setPesanSukses(true);
       setTimeout(() => {
         router.push("/warga/dashboard");
       }, 2500);
-    }, 1000);
+    } catch (error) {
+      console.error(error);
+      alert("Terjadi kesalahan saat mengirimkan permohonan. Silakan coba lagi.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

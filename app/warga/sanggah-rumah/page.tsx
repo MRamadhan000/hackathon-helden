@@ -3,9 +3,13 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
+import { useSanggahan } from "@/hooks/cores/useSanggahan";
 
 export default function HalamanSanggahRumahWarga() {
   const router = useRouter();
+  const { user } = useAuth();
+  const { submitRumah } = useSanggahan();
 
   // State Formulir Sanggahan
   const [kondisiDinding, setKondisiDinding] = useState("Bambu / Kayu Lapuk");
@@ -16,18 +20,40 @@ export default function HalamanSanggahRumahWarga() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pesanSukses, setPesanSukses] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) {
+      alert("Anda harus login terlebih dahulu");
+      return;
+    }
+    
     setIsSubmitting(true);
 
-    // Simulasi Pengiriman Laporan ke Ketua RT
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      const alasanLengkap = `Kondisi Atap: ${kondisiAtap}\nCatatan Warga: ${catatanPesan}`;
+      
+      await submitRumah({
+        pendudukId: user.id,
+        nikPelapor: user.nik,
+        namaPelapor: user.nama,
+        jenisDinding: kondisiDinding,
+        jenisLantai: kondisiLantai,
+        sanitasi: kepemilikanJamban,
+        alasanWarga: alasanLengkap,
+        tipeProses: "ONLINE",
+        reqMethod: "ONLINE"
+      }, user.id, "WARGA");
+
       setPesanSukses(true);
       setTimeout(() => {
         router.push("/warga/dashboard");
       }, 2500);
-    }, 1000);
+    } catch (error) {
+      console.error(error);
+      alert("Terjadi kesalahan saat mengirimkan laporan. Silakan coba lagi.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

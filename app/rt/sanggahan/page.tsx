@@ -9,6 +9,7 @@ import CardSanggahan, {
 } from "@/components/rt/CardSanggahan";
 import { useSanggahan } from "@/hooks/cores/useSanggahan";
 import { useAuth } from "@/hooks/useAuth";
+import { usePenduduk } from "@/hooks/cores/usePenduduk";
 
 function SanggahanContent() {
   const searchParams = useSearchParams();
@@ -18,17 +19,24 @@ function SanggahanContent() {
   const [activeTab, setActiveTab] = useState<"rumah" | "penduduk">("rumah");
   const [notif, setNotif] = useState("");
 
-  // Connection ke Supabase Hook (Tanpa mock dummy data!)
   const {
     listPenduduk: realListPenduduk,
     listRumah: realListRumah,
-    isLoading,
+    isLoading: isSanggahanLoading,
     forwardToSekdes,
   } = useSanggahan(tahunPeriode);
 
+  const { data: realPendudukList, isLoading: isPendudukLoading } = usePenduduk();
+  const isLoading = isSanggahanLoading || isPendudukLoading;
+
   // Map Data Supabase ke Format SanggahanDataPenduduk untuk UI
   const formattedListPenduduk: SanggahanDataPenduduk[] = useMemo(() => {
-    return (realListPenduduk || []).map((item) => ({
+    const areaId = currentUser?.clusterdesaId;
+    const myWargaNik = new Set((realPendudukList || []).filter(p => !areaId || p.clusterdesaId === areaId).map(p => p.nik));
+
+    return (realListPenduduk || [])
+      .filter((item) => !areaId || myWargaNik.has(item.nikPelapor))
+      .map((item) => ({
       id: item.id,
       namaPelapor: item.namaPelapor,
       nikPelapor: item.nikPelapor,
@@ -46,11 +54,16 @@ function SanggahanContent() {
           ? "Ditolak Sekdes"
           : "Pending",
     }));
-  }, [realListPenduduk]);
+  }, [realListPenduduk, realPendudukList, currentUser?.clusterdesaId]);
 
   // Map Data Supabase ke Format SanggahanKondisiRumah untuk UI
   const formattedListRumah: SanggahanKondisiRumah[] = useMemo(() => {
-    return (realListRumah || []).map((item) => ({
+    const areaId = currentUser?.clusterdesaId;
+    const myWargaNik = new Set((realPendudukList || []).filter(p => !areaId || p.clusterdesaId === areaId).map(p => p.nik));
+
+    return (realListRumah || [])
+      .filter((item) => !areaId || myWargaNik.has(item.nikPelapor))
+      .map((item) => ({
       id: item.id,
       namaPelapor: item.namaPelapor,
       nikPelapor: item.nikPelapor,
@@ -71,7 +84,7 @@ function SanggahanContent() {
           ? "Ditolak Sekdes"
           : "Pending",
     }));
-  }, [realListRumah]);
+  }, [realListRumah, realPendudukList, currentUser?.clusterdesaId]);
 
   const handleAjukanPenduduk = async (id: string) => {
     try {
