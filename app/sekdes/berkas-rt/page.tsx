@@ -3,6 +3,9 @@
 import React, { useState, useMemo, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
+import { useMutasi } from "@/hooks/cores/useMutasi";
+import type { MutasiPengajuan } from "@/types/mutasi";
 
 interface DetailWargaLengkap {
   nik: string;
@@ -217,6 +220,10 @@ function ValidasiBerkasRTContent() {
     );
     setSelectedDetail(null);
   };
+
+  const canReview =
+    !!selectedItem &&
+    (selectedItem.status === "PENDING" || selectedItem.status === "RESUBMITTED");
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-10 font-sans antialiased">

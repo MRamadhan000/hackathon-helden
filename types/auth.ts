@@ -14,6 +14,7 @@ export interface UserProfile {
   statusVerifikasiDukcapil: string;
   keluargaId: string;
   clusterdesaId: string;
+  rtNumber : string; // Nomor RT (misal: "03")
   role: UserRole;
 }
 

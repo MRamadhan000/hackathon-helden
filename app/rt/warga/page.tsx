@@ -5,39 +5,46 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import TableWarga, { PendudukRT } from "@/components/rt/TableWarga";
 import { usePenduduk } from "@/hooks/cores/usePenduduk";
+import { useAuth } from "@/hooks/useAuth";
 
 function WargaContent() {
   const searchParams = useSearchParams();
   const tahunPeriode = searchParams.get("tahun") || "2026";
+
+  const { user: currentUser, isLoading: isAuthLoading } = useAuth();
 
   // Connection ke Supabase Hook (Tanpa mock dummy data!)
   const { data: realPendudukList, isLoading } = usePenduduk();
 
   // Map Data Supabase ke Format PendudukRT
   const dataWarga: PendudukRT[] = useMemo(() => {
-    return (realPendudukList || []).map((p) => ({
-      id: p.id,
-      nik: p.nik,
-      nama: p.nama,
-      clusterdesaId: p.clusterdesaId,
-      jenisKelamin: (p.jenisKelamin === "P" ? "P" : "L") as "L" | "P",
-      tempatLahir: p.tempat_lahir,
-      tanggalLahir: p.tanggal_lahir,
-      statusPenduduk: (["Tetap", "Pindah", "Meninggal"].includes(
-        p.statusPenduduk,
-      )
-        ? p.statusPenduduk
-        : "Tetap") as "Tetap" | "Pindah" | "Meninggal",
-      statusVerifikasiDukcapil: (p.statusVerifikasiDukcapil ===
-      "Anomali / Unverified"
-        ? "Anomali / Unverified"
-        : "Terverifikasi") as "Terverifikasi" | "Anomali / Unverified",
-      terakhirDiperbarui: new Date(p.updated_at).toLocaleString("id-ID", {
-        dateStyle: "medium",
-        timeStyle: "short",
-      }),
-    }));
-  }, [realPendudukList]);
+    const areaId = currentUser?.clusterdesaId;
+
+    return (realPendudukList || [])
+      .filter((p) => !areaId || p.clusterdesaId === areaId)
+      .map((p) => ({
+        id: p.id,
+        nik: p.nik,
+        nama: p.nama,
+        clusterdesaId: p.clusterdesaId,
+        jenisKelamin: (p.jenisKelamin === "P" ? "P" : "L") as "L" | "P",
+        tempatLahir: p.tempat_lahir,
+        tanggalLahir: p.tanggal_lahir,
+        statusPenduduk: (["Tetap", "Pindah", "Meninggal"].includes(
+          p.statusPenduduk,
+        )
+          ? p.statusPenduduk
+          : "Tetap") as "Tetap" | "Pindah" | "Meninggal",
+        statusVerifikasiDukcapil: (p.statusVerifikasiDukcapil ===
+        "Anomali / Unverified"
+          ? "Anomali / Unverified"
+          : "Terverifikasi") as "Terverifikasi" | "Anomali / Unverified",
+        terakhirDiperbarui: new Date(p.updated_at).toLocaleString("id-ID", {
+          dateStyle: "medium",
+          timeStyle: "short",
+        }),
+      }));
+  }, [realPendudukList, currentUser?.clusterdesaId]);
 
   return (
     <div className="min-h-screen bg-slate-50 p-6 lg:p-12 space-y-6 font-sans antialiased">

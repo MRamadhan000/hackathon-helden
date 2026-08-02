@@ -36,7 +36,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               JSON.stringify(freshProfile)
             );
           } catch (freshErr) {
-            console.warn("Gagal memperbarui profil secara latar belakang:", freshErr);
+            setUser(null);
+            localStorage.removeItem(LOCAL_STORAGE_KEY);
+
+            if (
+              !(freshErr instanceof Error) ||
+              freshErr.message !== "Data profil penduduk tidak ditemukan."
+            ) {
+              console.warn("Gagal memperbarui profil secara latar belakang.");
+            }
           }
         }
       } catch (err) {

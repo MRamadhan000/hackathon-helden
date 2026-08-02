@@ -48,7 +48,8 @@ function mapSurveiKelayakanLogFromDb(row: any): SurveiKelayakanLog {
 
 // 1. Get List Survei Kelayakan
 export async function getSurveiKelayakanList(
-  tahun?: string
+  tahun?: string,
+  createdByUserId?: string | null
 ): Promise<SurveiKelayakan[]> {
   const supabase = createClient();
   let query = supabase
@@ -58,6 +59,14 @@ export async function getSurveiKelayakanList(
 
   if (tahun) {
     query = query.eq("tahun_periode", tahun);
+  }
+
+  if (createdByUserId) {
+    try {
+      query = query.or(`created_by_user_id.eq.${createdByUserId},created_by.eq.${createdByUserId}`);
+    } catch {
+      query = query.eq("created_by", createdByUserId);
+    }
   }
 
   const { data, error } = await query;

@@ -22,9 +22,9 @@ function KelayakanContent() {
   const [filterKategori, setFilterKategori] = useState("Semua");
 
   // Real Supabase Connection via Custom Hooks
-  const { data: realSurveiList, isLoading, submit: submitSurveiHook } = useSurveiKelayakan(tahunPeriode);
+  const { user: currentUser, isLoading: isAuthLoading } = useAuth();
+  const { data: realSurveiList, isLoading, submit: submitSurveiHook } = useSurveiKelayakan(tahunPeriode, currentUser?.id ?? null);
   const { data: realPendudukList } = usePenduduk();
-  const { user: currentUser } = useAuth();
 
   // Map Real Data Warga ke Format PendudukRT
   const daftarWarga: PendudukRT[] = useMemo(() => {
@@ -201,7 +201,7 @@ function KelayakanContent() {
           </div>
 
           {/* LOADING STATE */}
-          {isLoading ? (
+          {isLoading || isAuthLoading ? (
             <div className="p-10 text-center text-xs text-slate-400">
               Memuat data survei kelayakan dari Supabase...
             </div>

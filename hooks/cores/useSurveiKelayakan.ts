@@ -12,7 +12,7 @@ import {
   getSurveiKelayakanLogs,
 } from "@/services/core/kelayakan.service";
 
-export function useSurveiKelayakan(tahunPeriode?: string) {
+export function useSurveiKelayakan(tahunPeriode?: string, createdByUserId?: string | null) {
   const [data, setData] = useState<SurveiKelayakan[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
@@ -20,7 +20,7 @@ export function useSurveiKelayakan(tahunPeriode?: string) {
   const fetchKelayakan = useCallback(async () => {
     setIsLoading(true);
     try {
-      const result = await getSurveiKelayakanList(tahunPeriode);
+      const result = await getSurveiKelayakanList(tahunPeriode, createdByUserId);
       setData(result);
       setError(null);
     } catch (err) {
@@ -32,7 +32,7 @@ export function useSurveiKelayakan(tahunPeriode?: string) {
     } finally {
       setIsLoading(false);
     }
-  }, [tahunPeriode]);
+  }, [tahunPeriode, createdByUserId]);
 
   useEffect(() => {
     fetchKelayakan();
