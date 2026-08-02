@@ -23,17 +23,85 @@ ChartJS.register(
   Legend,
 );
 
+// Mock Data Anggaran Berdasarkan Tahun (Siskeudes Integration)
+const mockAnggaranPerTahun: Record<
+  string,
+  {
+    totalPagu: string;
+    totalRealisasi: string;
+    kategori: { nama: string; pagu: string; realisasi: string }[];
+  }
+> = {
+  "2026": {
+    totalPagu: "Rp 1.090.000.000",
+    totalRealisasi: "Rp 800.000.000 (73.4%)",
+    kategori: [
+      {
+        nama: "Perlindungan Sosial (Bansos BLT-DD)",
+        pagu: "Rp 360.000.000",
+        realisasi: "Rp 270.000.000",
+      },
+      {
+        nama: "Operasional Aparatur Desa (ADD)",
+        pagu: "Rp 280.000.000",
+        realisasi: "Rp 210.000.000",
+      },
+      {
+        nama: "Pembangunan Infrastruktur Fisik",
+        pagu: "Rp 450.000.000",
+        realisasi: "Rp 320.000.000",
+      },
+    ],
+  },
+  "2025": {
+    totalPagu: "Rp 980.000.000",
+    totalRealisasi: "Rp 978.500.000 (99.8%)",
+    kategori: [
+      {
+        nama: "Perlindungan Sosial (Bansos BLT-DD)",
+        pagu: "Rp 312.000.000",
+        realisasi: "Rp 310.800.000",
+      },
+      {
+        nama: "Operasional Aparatur Desa (ADD)",
+        pagu: "Rp 250.000.000",
+        realisasi: "Rp 250.000.000",
+      },
+      {
+        nama: "Pembangunan Infrastruktur Fisik",
+        pagu: "Rp 418.000.000",
+        realisasi: "Rp 417.700.000",
+      },
+    ],
+  },
+  "2024": {
+    totalPagu: "Rp 950.000.000",
+    totalRealisasi: "Rp 950.000.000 (100%)",
+    kategori: [
+      {
+        nama: "Perlindungan Sosial (Bansos BLT-DD)",
+        pagu: "Rp 336.000.000",
+        realisasi: "Rp 336.000.000",
+      },
+      {
+        nama: "Operasional Aparatur Desa (ADD)",
+        pagu: "Rp 240.000.000",
+        realisasi: "Rp 240.000.000",
+      },
+      {
+        nama: "Pembangunan Infrastruktur Fisik",
+        pagu: "Rp 374.000.000",
+        realisasi: "Rp 374.000.000",
+      },
+    ],
+  },
+};
+
 export default function PublicLandingPage() {
   const router = useRouter();
   const [nikInput, setNikInput] = useState("");
   const [errorNotif, setErrorNotif] = useState("");
-
-  // State Formulir Pengaduan Publik
-  const [namaPengadu, setNamaPengadu] = useState("");
-  const [kategoriPengaduan, setKategoriPengaduan] =
-    useState("Pelayanan Publik");
-  const [isiPengaduan, setIsiPengaduan] = useState("");
-  const [notifPengaduan, setNotifPengaduan] = useState("");
+  const [tahunAnggaran, setTahunAnggaran] = useState("2026");
 
   const handleCekNikWarga = (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,18 +118,10 @@ export default function PublicLandingPage() {
     router.push(`/warga/dashboard?nik=${cleanNik}`);
   };
 
-  const handleKirimPengaduan = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!isiPengaduan.trim()) return;
-    setNotifPengaduan(
-      "✓ Pengaduan Anda berhasil terkirim dan akan ditinjau oleh Sekretaris Desa.",
-    );
-    setNamaPengadu("");
-    setIsiPengaduan("");
-    setTimeout(() => setNotifPengaduan(""), 5000);
-  };
+  const dataAnggaranAktif =
+    mockAnggaranPerTahun[tahunAnggaran] || mockAnggaranPerTahun["2026"];
 
-  // CONFIG GRAFIK DEMOGRAFI (JENIS KELAMIN & SEBARAN RT)
+  // CONFIG GRAFIK DEMOGRAFI
   const dataDemografiJK = {
     labels: ["Laki-Laki", "Perempuan"],
     datasets: [
@@ -89,9 +149,7 @@ export default function PublicLandingPage() {
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-    },
+    plugins: { legend: { display: false } },
     scales: {
       x: { grid: { display: false } },
       y: { grid: { color: "#f1f5f9" } },
@@ -129,12 +187,6 @@ export default function PublicLandingPage() {
               className="hover:text-blue-900 transition whitespace-nowrap"
             >
               Transparansi APBDes
-            </a>
-            <a
-              href="#pengaduan"
-              className="hover:text-blue-900 transition whitespace-nowrap"
-            >
-              Kanal Pengaduan
             </a>
             <a
               href="#cek-nik"
@@ -178,12 +230,13 @@ export default function PublicLandingPage() {
               >
                 Cek Alokasi Dana APBDes ↓
               </a>
-              <Link
-                href="/login"
+              {/* TOMBOL DIGANTI DARI AKSES PERANGKAT MENJADI CEK DEMOGRAFI */}
+              <a
+                href="#demografi"
                 className="px-5 py-2.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 font-bold text-xs rounded-xl transition"
               >
-                Akses Perangkat Desa 🪪
-              </Link>
+                📊 Cek Demografi Penduduk
+              </a>
             </div>
           </div>
 
@@ -245,7 +298,46 @@ export default function PublicLandingPage() {
           </div>
         </section>
 
-        {/* 3. DEMOGRAFI & STATISTIK DESA (GRAFIK BAR LENGKAP - PERBAIKAN POIN 3) */}
+        {/* 3. CARD STATISTIK UTAMA (TOTAL PENDUDUK & TOTAL KEPALA KELUARGA) */}
+        <section className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-1">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              👥 Jumlah Penduduk Keseluruhan
+            </span>
+            <div className="text-2xl font-black text-slate-900 font-mono">
+              3.412 Jiwa
+            </div>
+            <p className="text-[11px] text-emerald-700 font-bold">
+              Terverifikasi Dukcapil Pusat
+            </p>
+          </div>
+
+          <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-1">
+            <span className="text-[10px] font-bold text-slate-400 uppercase block">
+              🏠 Total Kepala Keluarga (KK)
+            </span>
+            <div className="text-2xl font-black text-slate-900 font-mono">
+              984 Keluarga
+            </div>
+            <p className="text-[11px] text-blue-700 font-bold">
+              Tersebar di 5 Wilayah RT
+            </p>
+          </div>
+
+          <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-1">
+            <span className="text-[10px] font-bold text-slate-400 uppercase block">
+              🤝 Penerima Bantuan Aktif (KPM)
+            </span>
+            <div className="text-2xl font-black text-emerald-800 font-mono">
+              245 KPM
+            </div>
+            <p className="text-[11px] text-slate-500 font-bold">
+              Program BLT Dana Desa
+            </p>
+          </div>
+        </section>
+
+        {/* 4. DEMOGRAFI & STATISTIK DESA (GRAFIK BAR LENGKAP) */}
         <section
           id="demografi"
           className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-xs space-y-6"
@@ -263,9 +355,6 @@ export default function PublicLandingPage() {
                 dan wilayah RT.
               </p>
             </div>
-            <span className="px-3 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 self-start sm:self-auto">
-              Total 3.412 Jiwa (984 KK)
-            </span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -298,162 +387,47 @@ export default function PublicLandingPage() {
           </div>
         </section>
 
-        {/* 4. KANAL PENGADUAN & ASPIRASI PUBLIK (PERBAIKAN POIN 4) */}
-        <section
-          id="pengaduan"
-          className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-xs space-y-6"
-        >
-          <div className="border-b border-slate-100 pb-4">
-            <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded border border-amber-200 uppercase inline-block mb-1">
-              📣 LAYANAN ASPIRASI WARGA
-            </span>
-            <h3 className="text-base font-extrabold text-slate-950">
-              Kanal Pengaduan & Layanan Publik Desa
-            </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Sampaikan pengaduan, masukan, atau kendala fasilitas umum desa
-              untuk ditindaklanjuti Sekretaris Desa.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-            {/* FORMULIR PENGADUAN PUBLIK */}
-            <form
-              onSubmit={handleKirimPengaduan}
-              className="md:col-span-7 space-y-4"
-            >
-              {notifPengaduan && (
-                <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-950 rounded-xl text-xs font-bold">
-                  {notifPengaduan}
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase block">
-                    Nama Pelapor (Opsional / Anonim)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Nama Anda..."
-                    value={namaPengadu}
-                    onChange={(e) => setNamaPengadu(e.target.value)}
-                    className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 bg-slate-50 focus:bg-white focus:outline-none focus:border-amber-600"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase block">
-                    Kategori Pengaduan
-                  </label>
-                  <select
-                    value={kategoriPengaduan}
-                    onChange={(e) => setKategoriPengaduan(e.target.value)}
-                    className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 bg-slate-50 focus:bg-white focus:outline-none focus:border-amber-600 cursor-pointer"
-                  >
-                    <option value="Pelayanan Publik">
-                      Pelayanan Administrasi
-                    </option>
-                    <option value="Infrastruktur / Fasilitas">
-                      Fasilitas Jalan / Saluran
-                    </option>
-                    <option value="Bantuan Sosial">
-                      Kritik & Saran Bansos
-                    </option>
-                    <option value="Lainnya">Lainnya</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase block">
-                  Detail Isi Pengaduan / Aspirasi
-                </label>
-                <textarea
-                  rows={4}
-                  required
-                  placeholder="Tuliskan keluhan atau laporan Anda secara jelas..."
-                  value={isiPengaduan}
-                  onChange={(e) => setIsiPengaduan(e.target.value)}
-                  className="w-full p-3.5 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 bg-slate-50 focus:bg-white focus:outline-none focus:border-amber-600"
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-xs"
-              >
-                Kirim Laporan Pengaduan →
-              </button>
-            </form>
-
-            {/* LOG ARSIP PENGADUAN TERKINI */}
-            <div className="md:col-span-5 bg-slate-50 p-5 rounded-2xl border border-slate-200/80 space-y-3">
-              <h4 className="text-xs font-extrabold text-slate-900 uppercase">
-                ⏱️ Status Pengaduan Publik Terakhir:
-              </h4>
-
-              <div className="space-y-2.5 text-xs">
-                <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
-                  <div className="flex justify-between items-center text-[10px]">
-                    <span className="font-bold text-slate-500">
-                      29/07/2026 • Infrastruktur
-                    </span>
-                    <span className="px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 font-extrabold rounded">
-                      ✓ Selesai
-                    </span>
-                  </div>
-                  <p className="font-medium text-slate-800">
-                    Perbaikan Penerangan Jalan Dusun Krajan RT 02 telah
-                    direalisasikan.
-                  </p>
-                </div>
-
-                <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
-                  <div className="flex justify-between items-center text-[10px]">
-                    <span className="font-bold text-slate-500">
-                      25/07/2026 • Pelayanan
-                    </span>
-                    <span className="px-2 py-0.5 bg-amber-50 text-amber-900 border border-amber-200 font-extrabold rounded">
-                      ⏳ Proses RT
-                    </span>
-                  </div>
-                  <p className="font-medium text-slate-800">
-                    Usulan pembuatan KTP baru warga disabilitas sedang
-                    didampingi kader RT.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* 5. TRANSPARANSI ANGGARAN APBDES (SISKEUDES) */}
+        {/* 5. TRANSPARANSI ANGGARAN APBDES (SISKEUDES) DENGAN CARD PILIHAN TAHUN */}
         <section
           id="anggaran"
           className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-xs space-y-6"
         >
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
             <div>
               <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 uppercase block w-fit mb-1">
-                📊 Anggaran Terbuka (SISKEUDES)
+                📊 Realisasi Anggaran Per Tahun (Siskeudes)
               </span>
               <h3 className="text-base font-extrabold text-slate-950">
-                Realisasi & Alokasi Pembiayaan Anggaran Desa
+                Transparansi Alokasi & Realisasi Dana Desa ({tahunAnggaran})
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Seluruh rekapitulasi pengeluaran dan pemasukan dana desa
-                dipublikasikan secara transparan setelah melalui validasi
-                menyeluruh oleh Sekretaris Desa.
+                Total Pagu Anggaran:{" "}
+                <strong className="text-slate-900">
+                  {dataAnggaranAktif.totalPagu}
+                </strong>{" "}
+                • Total Terealisasikan:{" "}
+                <strong className="text-emerald-800">
+                  {dataAnggaranAktif.totalRealisasi}
+                </strong>
               </p>
             </div>
 
-            <Link
-              href="/siskeudes"
-              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 transition shrink-0 self-start sm:self-auto"
-            >
-              Buka Detail Laporan Siskeudes →
-            </Link>
+            {/* CARD / TOMBOL PEMILIHAN TAHUN */}
+            <div className="flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 shrink-0">
+              {["2026", "2025", "2024"].map((thn) => (
+                <button
+                  key={thn}
+                  onClick={() => setTahunAnggaran(thn)}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                    tahunAnggaran === thn
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "text-slate-600 hover:bg-slate-200/70"
+                  }`}
+                >
+                  {thn}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="overflow-x-auto border border-slate-200/80 rounded-2xl">
@@ -461,40 +435,24 @@ export default function PublicLandingPage() {
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
                   <th className="p-3">Kategori Pos Pembiayaan</th>
-                  <th className="p-3 font-mono">Plafon Rencana</th>
+                  <th className="p-3 font-mono">Total Alokasi Anggaran</th>
                   <th className="p-3 font-mono text-right">
-                    Realisasi Penyaluran
+                    Anggaran yang Terealisasikan / Tersalurkan
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
-                <tr className="hover:bg-slate-50">
-                  <td className="p-3 font-bold text-slate-900">
-                    Perlindungan Sosial (Bansos)
-                  </td>
-                  <td className="p-3 font-mono">Rp 360.000.000</td>
-                  <td className="p-3 font-mono font-bold text-emerald-800 text-right">
-                    Rp 270.000.000
-                  </td>
-                </tr>
-                <tr className="hover:bg-slate-50">
-                  <td className="p-3 font-bold text-slate-900">
-                    Operasional Aparatur Desa (ADD)
-                  </td>
-                  <td className="p-3 font-mono">Rp 280.000.000</td>
-                  <td className="p-3 font-mono font-bold text-emerald-800 text-right">
-                    Rp 210.000.000
-                  </td>
-                </tr>
-                <tr className="hover:bg-slate-50">
-                  <td className="p-3 font-bold text-slate-900">
-                    Pembangunan Infrastruktur Fisik
-                  </td>
-                  <td className="p-3 font-mono">Rp 450.000.000</td>
-                  <td className="p-3 font-mono font-bold text-emerald-800 text-right">
-                    Rp 320.000.000
-                  </td>
-                </tr>
+                {dataAnggaranAktif.kategori.map((kat, idx) => (
+                  <tr key={idx} className="hover:bg-slate-50">
+                    <td className="p-3 font-bold text-slate-900">{kat.nama}</td>
+                    <td className="p-3 font-mono font-bold text-slate-800">
+                      {kat.pagu}
+                    </td>
+                    <td className="p-3 font-mono font-bold text-emerald-800 text-right">
+                      {kat.realisasi}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
