@@ -17,6 +17,7 @@ function mapProfileFromDb(penduduk: any, roleData?: any): UserProfile {
     statusVerifikasiDukcapil: penduduk.status_verifikasi_dukcapil,
     keluargaId: penduduk.keluarga_id,
     clusterdesaId: penduduk.clusterdesa_id,
+    rtNumber: penduduk.tweb_clusterdesa?.nama,
     role: userRole,
   };
 }
@@ -72,13 +73,21 @@ export async function loginByNik(nik: string): Promise<UserProfile> {
 
 // 2. Fetch Profile berdasarkan Penduduk ID
 export async function getProfileByPendudukId(
-  pendudukId: string
+  pendudukId: string,
 ): Promise<UserProfile> {
   const supabase = createClient();
 
   const { data: penduduk, error: pendudukError } = await supabase
     .from("tweb_penduduk")
-    .select("*")
+    .select(
+      `
+    *,
+    tweb_clusterdesa (
+      id,
+      nama
+    )
+  `,
+    )
     .eq("id", pendudukId)
     .single();
 
@@ -98,7 +107,7 @@ export async function getProfileByPendudukId(
 // 3. Assign / Update Role Pengguna Desa
 export async function setUserRole(
   pendudukId: string,
-  role: UserRole
+  role: UserRole,
 ): Promise<UserRole> {
   const supabase = createClient();
 
@@ -140,8 +149,12 @@ export async function getAllUserRoles(): Promise<UserRoleRecord[]> {
     .order("created_at", { ascending: false });
 
   if (error) {
-    const { data: rawRoles } = await supabase.from("tweb_user_role").select("*");
-    const { data: pendudukList } = await supabase.from("tweb_penduduk").select("id, nik, nama");
+    const { data: rawRoles } = await supabase
+      .from("tweb_user_role")
+      .select("*");
+    const { data: pendudukList } = await supabase
+      .from("tweb_penduduk")
+      .select("id, nik, nama");
     const pMap = new Map((pendudukList || []).map((p) => [p.id, p]));
 
     return (rawRoles || []).map((r) => ({

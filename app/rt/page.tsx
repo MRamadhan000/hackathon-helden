@@ -4,12 +4,13 @@ import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import RTHeader from "@/components/rt/RTHeader";
+import { useAuth } from "@/hooks/useAuth";
 
 // KOMPONEN UTAMA DENGAN LOGIKA useSearchParams
 function DashboardRTContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-
+  const { user: currentUser, isLoading: isAuthLoading } = useAuth();
   // Inisialisasi state tahun dari URL params atau LocalStorage (Default: 2026)
   const [tahunPeriode, setTahunPeriodeState] = useState("2026");
 
@@ -89,7 +90,7 @@ function DashboardRTContent() {
         <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <h2 className="text-lg sm:text-xl font-extrabold text-slate-950">
-              Selamat Datang di Panel Kerja RT 03 / RW 01 👋
+              Selamat Datang di Panel Kerja {currentUser?.rtNumber} 👋
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 max-w-2xl">
               Silahkan pilih salah satu kartu fitur di bawah ini untuk mengelola
