@@ -9,6 +9,7 @@ export interface Penerima {
   areaLocationId: string;
   createdBy: string;
   status: StatusPenerima;
+  nominal: number | null;
   catatan: string | null;
   createdAt: string;
   updatedAt: string;
@@ -25,11 +26,13 @@ export interface CreatePenerimaRequest {
   pendudukId: string;
   areaLocationId: string;
   createdBy: string;
+  nominal?: number | null;
   catatan?: string | null;
 }
 
 export interface UpdatePenerimaRequest {
   status?: StatusPenerima;
+  nominal?: number | null;
   catatan?: string | null;
 }
 

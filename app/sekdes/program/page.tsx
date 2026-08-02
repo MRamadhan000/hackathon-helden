@@ -484,6 +484,7 @@ function PenerimaPanel({
   const [selectedPenduduk, setSelectedPenduduk] = useState<Penduduk | null>(null);
   const [selectedArea, setSelectedArea] = useState<ClusterDesa | null>(null);
   const [catatan, setCatatan] = useState("");
+  const [nominalInput, setNominalInput] = useState("");
   const [pendudukSearch, setPendudukSearch] = useState("");
   const [areaSearch, setAreaSearch] = useState("");
   const [saving, setSaving] = useState(false);
@@ -522,6 +523,7 @@ function PenerimaPanel({
     setSelectedPenduduk(null);
     setSelectedArea(null);
     setCatatan("");
+    setNominalInput("");
     setPendudukSearch("");
     setAreaSearch("");
     setFormErr("");
@@ -550,6 +552,7 @@ function PenerimaPanel({
         pendudukId: selectedPenduduk.id,
         areaLocationId: selectedArea.id,
         createdBy: userId,
+        nominal: nominalInput ? Number(nominalInput) : null,
         catatan: catatan || null,
       } as CreatePenerimaRequest);
       resetForm();
@@ -728,6 +731,24 @@ function PenerimaPanel({
                         <p className="text-[11px] text-slate-400 text-center py-3">Tidak ada wilayah ditemukan.</p>
                       )}
                     </div>
+                  )}
+                </div>
+
+                {/* ── Nominal ── */}
+                <div>
+                  <label className="block text-[9px] font-bold uppercase text-slate-500 mb-1">Nominal Bantuan (Rp)</label>
+                  <input
+                    type="number"
+                    value={nominalInput}
+                    onChange={(e) => setNominalInput(e.target.value)}
+                    placeholder="Contoh: 300000"
+                    min={0}
+                    className="w-full bg-white border border-slate-200 text-[11px] font-medium text-slate-800 py-2 px-3 rounded-xl focus:outline-none focus:border-emerald-400"
+                  />
+                  {nominalInput && (
+                    <p className="text-[10px] text-emerald-700 mt-0.5 font-mono">
+                      = {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(Number(nominalInput))}
+                    </p>
                   )}
                 </div>
 

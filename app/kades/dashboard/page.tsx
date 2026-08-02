@@ -584,6 +584,62 @@ function DashboardKadesContent() {
           onOpenModal={(t) => setModalCardType(t)}
         />
 
+        {/* 1.5 AKSES CEPAT — PROGRAM BANSOS & SK */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Card: Program Bansos + Export SK */}
+          <Link
+            href={`/kades/program?tahun=${tahunPeriode}`}
+            id="link-program-bansos"
+            className="group relative bg-gradient-to-br from-indigo-600 to-blue-600 rounded-2xl p-6 shadow-sm hover:shadow-indigo-200/60 hover:shadow-lg transition-all duration-200 overflow-hidden cursor-pointer flex items-center justify-between gap-4"
+          >
+            {/* BG decoration */}
+            <div className="absolute inset-0 opacity-10 pointer-events-none">
+              <div className="absolute -top-6 -right-6 w-32 h-32 bg-white rounded-full" />
+              <div className="absolute -bottom-4 -left-4 w-20 h-20 bg-white rounded-full" />
+            </div>
+            <div className="relative z-10">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-white/20 text-white border border-white/30 rounded-md text-[10px] font-bold uppercase mb-2">
+                📋 Program
+              </span>
+              <h3 className="text-base font-extrabold text-white">
+                Program Bansos & Ekspor SK
+              </h3>
+              <p className="text-[11px] text-indigo-200 mt-0.5 leading-relaxed">
+                Lihat daftar program, penerima APPROVED & cetak Surat Keputusan (PDF)
+              </p>
+            </div>
+            <div className="relative z-10 w-12 h-12 rounded-xl bg-white/20 group-hover:bg-white/30 flex items-center justify-center text-2xl shrink-0 transition">
+              📄
+            </div>
+          </Link>
+
+          {/* Card: Detail KPM per RT */}
+          <Link
+            href={`/kades/detail-kpm?tahun=${tahunPeriode}`}
+            id="link-detail-kpm"
+            className="group relative bg-gradient-to-br from-emerald-600 to-teal-600 rounded-2xl p-6 shadow-sm hover:shadow-emerald-200/60 hover:shadow-lg transition-all duration-200 overflow-hidden cursor-pointer flex items-center justify-between gap-4"
+          >
+            <div className="absolute inset-0 opacity-10 pointer-events-none">
+              <div className="absolute -top-6 -right-6 w-32 h-32 bg-white rounded-full" />
+              <div className="absolute -bottom-4 -left-4 w-20 h-20 bg-white rounded-full" />
+            </div>
+            <div className="relative z-10">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-white/20 text-white border border-white/30 rounded-md text-[10px] font-bold uppercase mb-2">
+                👥 KPM
+              </span>
+              <h3 className="text-base font-extrabold text-white">
+                Detail KPM Bansos Per RT
+              </h3>
+              <p className="text-[11px] text-emerald-200 mt-0.5 leading-relaxed">
+                Tinjau tren penerima manfaat 5 tahun & daftar warga per RT
+              </p>
+            </div>
+            <div className="relative z-10 w-12 h-12 rounded-xl bg-white/20 group-hover:bg-white/30 flex items-center justify-center text-2xl shrink-0 transition">
+              👥
+            </div>
+          </Link>
+        </div>
+
         {/* 2. GRAFIK TREN PERTUMBUHAN PENDUDUK */}
         <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200/80 shadow-xs space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-4">

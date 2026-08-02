@@ -20,6 +20,7 @@ function mapFromDb(row: any): Penerima {
     areaLocationId: row.area_location_id,
     createdBy: row.created_by,
     status: row.status,
+    nominal: row.nominal != null ? Number(row.nominal) : null,
     catatan: row.catatan ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -76,6 +77,7 @@ export async function createPenerima(payload: CreatePenerimaRequest): Promise<Pe
       area_location_id: payload.areaLocationId,
       created_by: payload.createdBy,
       catatan: payload.catatan ?? null,
+      nominal: payload.nominal ?? null,
       status: "PENDING",
     })
     .select("*")
@@ -94,6 +96,7 @@ export async function updatePenerimaStatus(
   const patch: Record<string, any> = { updated_at: new Date().toISOString() };
   if (payload.status !== undefined) patch.status = payload.status;
   if (payload.catatan !== undefined) patch.catatan = payload.catatan;
+  if (payload.nominal !== undefined) patch.nominal = payload.nominal;
 
   const { data, error } = await supabase
     .from("penerima")
