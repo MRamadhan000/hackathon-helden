@@ -1,15 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import SekdesHeader from "@/components/sekdes/SekdesHeader";
 
-export default function DashboardSekdes() {
+function DashboardSekdesContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // Inisialisasi state tahun konsisten
   const [tahunPeriode, setTahunPeriodeState] = useState("2026");
 
   useEffect(() => {
@@ -31,37 +30,46 @@ export default function DashboardSekdes() {
     router.replace(`/sekdes/dashboard?tahun=${tahun}`);
   };
 
-  // List Kartu Navigasi Utama Sekdes
+  // LIST KARTU DENGAN INFORMASI & INDIKATOR DATA UNTUK VALiDASI
   const menuCards = [
     {
       id: "berkas-rt",
       title: "Validasi Berkas & Mutasi RT",
-      tag: "3 BERKAS MASUK",
-      desc: "Periksa dan verifikasi usulan warga baru, mutasi kematian, serta perbaikan data dari seluruh Ketua RT.",
+      tag: "1. BERKAS MASUK",
+      urgentCount: 2,
+      desc: "Periksa usulan pendaftaran warga baru, mutasi kematian, dan perubahan domisili dari Ketua RT.",
       icon: "📋",
       badgeColor: "bg-rose-100 text-rose-800 border-rose-200",
       href: `/sekdes/berkas-rt?tahun=${tahunPeriode}`,
-      countText: "Perlu Validasi Segera",
+      infoText: "2 Permohonan Menunggu Persetujuan",
+      infoBg: "bg-rose-50 border-rose-200/80 text-rose-900",
+      dotColor: "bg-rose-500",
     },
     {
-      id: "siskeudes",
-      title: "Audit Pagu Siskeudes & Dana Desa",
-      tag: "POSISI KAS SINKRON",
-      desc: "Pantau ketersediaan Pagu Dana Siskeudes (RKD) dan simulasi batas kuota penerima Bansos desa.",
-      icon: "💰",
-      badgeColor: "bg-emerald-100 text-emerald-800 border-emerald-200",
-      href: `/sekdes/siskeudes?tahun=${tahunPeriode}`,
-      countText: "Pagu Rp 90.000.000",
+      id: "sanggahan-bansos",
+      title: "Validasi Sanggahan Kelayakan Bansos",
+      tag: "2. RESPON WARGA",
+      urgentCount: 1,
+      desc: "Tindak lanjuti sanggahan kondisi rumah atau ketidakcocokan data kependudukan kurang mampu dari warga.",
+      icon: "⚖️",
+      badgeColor: "bg-amber-100 text-amber-800 border-amber-200",
+      href: `/sekdes/sanggahan?tahun=${tahunPeriode}`,
+      infoText: "1 Sanggahan Perlu Ditinjau ulang",
+      infoBg: "bg-amber-50 border-amber-200/80 text-amber-900",
+      dotColor: "bg-amber-500",
     },
     {
       id: "rekomendasi-sk",
       title: "Rekomendasi Draft SK KPM Bansos",
-      tag: "2 DRAFT SK SIAP",
-      desc: "Tinjau kelayakan skor DTKS/Prodeskel warga hasil verifikasi RT untuk diajukan penetapan SK ke Kepala Desa.",
-      icon: "📄",
-      badgeColor: "bg-blue-100 text-blue-800 border-blue-200",
+      tag: "3. DRAFT SK KADES",
+      urgentCount: 2,
+      desc: "Tinjau kelayakan skor Prodeskel/DTKS hasil verifikasi RT untuk disusun menjadi draft SK Kades.",
+      icon: "📜",
+      badgeColor: "bg-emerald-100 text-emerald-800 border-emerald-200",
       href: `/sekdes/rekomendasi-sk?tahun=${tahunPeriode}`,
-      countText: "Aplikasi SK Kades",
+      infoText: "2 Draft SK Siap Diajukan ke Kades",
+      infoBg: "bg-emerald-50 border-emerald-200/80 text-emerald-900",
+      dotColor: "bg-emerald-500",
     },
   ];
 
@@ -81,8 +89,8 @@ export default function DashboardSekdes() {
               Selamat Datang Kembali, Ibu Siti (Sekretaris Desa) 👋
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 max-w-2xl">
-              Seluruh usulan dari Ketua RT dikelompokkan berdasarkan prioritas
-              aksi untuk mempermudah pemantauan dan keputusan validasi Anda.
+              Berikut adalah ringkasan usulan dan laporan dari Ketua RT yang
+              membutuhkan tindakan verifikasi Anda.
             </p>
           </div>
           <div className="px-4 py-2 bg-indigo-50 border border-indigo-200/80 rounded-xl shrink-0 self-start sm:self-auto">
@@ -95,19 +103,23 @@ export default function DashboardSekdes() {
           </div>
         </div>
 
-        {/* GRID KARTU NAVIGASI UTAMA (3 CARD) */}
+        {/* GRID KARTU NAVIGASI UTAMA (3 CARD TERVISI DENGAN INDIKATOR PER-CARD) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {menuCards.map((card) => (
             <Link
               key={card.id}
               href={card.href}
-              className="group bg-white p-7 rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md hover:border-indigo-500/50 transition-all duration-200 flex flex-col justify-between space-y-6 relative overflow-hidden"
+              className="group bg-white p-6 sm:p-7 rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md hover:border-indigo-500/50 transition-all duration-200 flex flex-col justify-between space-y-5 relative overflow-hidden"
             >
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
+                {/* Header Tag + Badge Jumlah Data */}
+                <div className="flex items-center justify-between gap-2">
                   <span
-                    className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${card.badgeColor}`}
+                    className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border flex items-center gap-1.5 ${card.badgeColor}`}
                   >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${card.dotColor} animate-pulse`}
+                    />
                     {card.tag}
                   </span>
                   <span className="text-2xl group-hover:scale-110 transition-transform duration-200">
@@ -115,19 +127,29 @@ export default function DashboardSekdes() {
                   </span>
                 </div>
 
+                {/* Judul & Deskripsi */}
                 <div>
                   <h3 className="text-base font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
                     {card.title}
                   </h3>
-                  <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                  <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
                     {card.desc}
                   </p>
                 </div>
+
+                {/* NOTIFIKASI INFORMASI DENGAN JUMLAH DATA MASUK */}
+                <div
+                  className={`p-3 rounded-xl border text-xs font-bold flex items-center gap-2.5 ${card.infoBg}`}
+                >
+                  <span className="text-sm shrink-0">🔔</span>
+                  <span className="leading-snug">{card.infoText}</span>
+                </div>
               </div>
 
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-indigo-600">
-                <span className="text-slate-400 font-medium">
-                  {card.countText}
+              {/* Action Link Footer */}
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-indigo-600">
+                <span className="text-slate-400 font-medium text-[11px]">
+                  Klik untuk memproses
                 </span>
                 <span className="inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                   Buka Berkas →
@@ -138,5 +160,20 @@ export default function DashboardSekdes() {
         </div>
       </main>
     </div>
+  );
+}
+
+// EXPORT DEFAULT UTAMA DENGAN SUSPENSE BOUNDARY
+export default function DashboardSekdes() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-slate-50 p-10 text-center text-xs text-slate-400 font-medium">
+          Memuat Panel Sekretaris Desa...
+        </div>
+      }
+    >
+      <DashboardSekdesContent />
+    </Suspense>
   );
 }
