@@ -669,7 +669,7 @@ function DashboardKadesContent() {
         </div>
 
         {/* 3. PANEL EKSEKUSI PERSETUJUAN DRAFT SK */}
-        {isTahunBerjalan ? (
+        {/* {isTahunBerjalan ? (
           <div
             id="seksi-draft-sk"
             className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200/80 shadow-xs space-y-6"
@@ -749,17 +749,17 @@ function DashboardKadesContent() {
               Tahun Terkunci
             </span>
           </div>
-        )}
+        )} */}
 
         {/* 4. RIWAYAT ARSIP LOG TABLE */}
-        <SkHistoryLogTable
+        {/* <SkHistoryLogTable
           riwayatList={riwayatList}
           tahunPeriode={tahunPeriode}
           onOpenPdf={(item) => setPdfPreviewData(item)}
-        />
+        /> */}
 
         {/* 5. RADAR KETERJANGKAUAN BANSOS PER RT */}
-        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200/80 shadow-xs space-y-6">
+        {/* <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200/80 shadow-xs space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
             <div>
               <h3 className="text-base font-bold text-slate-950">
@@ -816,11 +816,11 @@ function DashboardKadesContent() {
               </div>
             )}
           </div>
-        </div>
+        </div> */}
       </main>
 
       {/* MODAL CENTER MATRIKS RT BLT */}
-      {selectedMatriksRT && (
+      {/* {selectedMatriksRT && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
             <div className="p-5 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
@@ -979,7 +979,7 @@ function DashboardKadesContent() {
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* MODAL POP-UP CENTER TITIK GRAFIK */}
       {showChartModal && (

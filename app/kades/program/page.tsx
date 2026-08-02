@@ -266,12 +266,7 @@ function ProgramCard({
           >
             <span>📄</span> Export SK PDF
           </button>
-          <Link
-            href={`/sekdes/program/${prog.id}`}
-            className="px-3 py-2.5 border border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 font-bold text-[11px] rounded-xl transition-all duration-150 flex items-center gap-1"
-          >
-            Penerima →
-          </Link>
+        
         </div>
       </div>
     </div>
