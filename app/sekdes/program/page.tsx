@@ -1080,12 +1080,7 @@ function ProgramPage() {
             <div className="py-16 text-center space-y-2">
               <p className="text-2xl">📋</p>
               <p className="text-xs font-bold text-slate-500">Belum ada program untuk periode {tahun}.</p>
-              <button
-                onClick={() => { setSelectedSiskeudes(null); setMode("add-step1"); }}
-                className="mt-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl cursor-pointer"
-              >
-                + Tambah Program Pertama
-              </button>
+              
             </div>
           )}
         </div>

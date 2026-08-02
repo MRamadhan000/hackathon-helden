@@ -311,29 +311,28 @@ function SekdesDashboardContent() {
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="px-2.5 py-0.5 bg-amber-50 text-amber-900 border border-amber-200 text-[10px] font-extrabold rounded-md uppercase">
-                2. RESPON WARGA
-              </span>
-              <span className="text-xl">⚖️</span>
-            </div>
-            <h3 className="text-sm font-extrabold text-slate-900">
-              Validasi Sanggahan Bansos
-            </h3>
-            <p className="text-xs text-slate-500">
-              Tindak lanjuti sanggahan kondisi rumah atau ketidakcocokan data
-              kependudukan dari warga.
-            </p>
-            <div className="p-3 bg-amber-50/50 rounded-xl border border-amber-200/80 flex items-center justify-between text-xs font-bold text-amber-950">
-              <span>🔔 1 Sanggahan Perlu Ditinjau</span>
-              <Link href="/sekdes/sanggahan">
-                <span className="text-blue-600 hover:underline cursor-pointer">
-                  Buka Berkas →
-                </span>
-              </Link>
-            </div>
-          </div>
+      <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-3">
+  <div className="flex items-center justify-between">
+    <span className="px-2.5 py-0.5 bg-amber-50 text-amber-900 border border-amber-200 text-[10px] font-extrabold rounded-md uppercase">
+      2. MANAJEMEN PROGRAM
+    </span>
+    <span className="text-xl">📋</span>
+  </div>
+  <h3 className="text-sm font-extrabold text-slate-900">
+    Kelola Program & Target Bansos
+  </h3>
+  <p className="text-xs text-slate-500">
+    Monitoring pelaksanaan, penjadwalan, dan evaluasi penyaluran bantuan sosial warga.
+  </p>
+  <div className="p-3 bg-amber-50/50 rounded-xl border border-amber-200/80 flex items-center justify-between text-xs font-bold text-amber-950">
+    <span>📊 1 Program Aktif Berjalan</span>
+    <Link href="/sekdes/program">
+      <span className="text-blue-600 hover:underline cursor-pointer">
+        Kelola Program →
+      </span>
+    </Link>
+  </div>
+</div>
 
           <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-3">
             <div className="flex items-center justify-between">

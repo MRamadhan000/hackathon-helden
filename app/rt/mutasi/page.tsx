@@ -532,6 +532,9 @@ function MutasiContent() {
     setShowModal(true);
   };
 
+  // clusterdesaId RT yang login, dipakai sebagai default wilayah untuk warga baru
+  const rtClusterdesaId = currentUser?.clusterdesaId || "";
+
   const openResubmitModal = (item: RiwayatMutasiItem) => {
     setSelectedDetailItem(null);
     setResubmitSource(item);
@@ -862,6 +865,7 @@ function MutasiContent() {
           onSubmitMutasi={handleMutasiSubmit}
           onClose={closeMutasiModal}
           initialSubAksi={resubmitSource ? mapJenisMutasiToSubAksi(resubmitSource.jenis) : undefined}
+          defaultClusterdesaId={rtClusterdesaId}
           initialFormDetail={
             resubmitSource
               ? {

@@ -137,6 +137,8 @@ interface FormMutasiLengkapProps {
     clusterdesaId?: string;
     keterangan?: string;
   };
+  /** clusterdesaId dari RT yang login, dipakai sebagai default wilayah untuk warga baru */
+  defaultClusterdesaId?: string;
   lockSubAksi?: boolean;
   resubmitInfo?: string;
 }
@@ -152,6 +154,7 @@ export default function FormMutasiLengkap({
   onClose,
   initialSubAksi,
   initialFormDetail,
+  defaultClusterdesaId = "",
   lockSubAksi = false,
   resubmitInfo,
 }: FormMutasiLengkapProps) {
@@ -169,7 +172,7 @@ export default function FormMutasiLengkap({
     tanggalLahir: initialFormDetail?.tanggalLahir || "",
     agama: initialFormDetail?.agama || "Islam",
     keluargaId: initialFormDetail?.keluargaId || "",
-    clusterdesaId: initialFormDetail?.clusterdesaId || "",
+    clusterdesaId: initialFormDetail?.clusterdesaId || defaultClusterdesaId,
     keterangan: initialFormDetail?.keterangan || "Meninggal Dunia",
   });
 
@@ -183,11 +186,11 @@ export default function FormMutasiLengkap({
       tanggalLahir: initialFormDetail?.tanggalLahir || "",
       agama: initialFormDetail?.agama || "Islam",
       keluargaId: initialFormDetail?.keluargaId || "",
-      clusterdesaId: initialFormDetail?.clusterdesaId || "",
+      clusterdesaId: initialFormDetail?.clusterdesaId || defaultClusterdesaId,
       keterangan: initialFormDetail?.keterangan || "Meninggal Dunia",
     });
     setSelectedNik(initialFormDetail?.nik || "");
-  }, [initialSubAksi, initialFormDetail, setSelectedNik]);
+  }, [initialSubAksi, initialFormDetail, setSelectedNik, defaultClusterdesaId]);
 
   const handleSelectWargaEksisting = (nik: string) => {
     setSelectedNik(nik);
@@ -220,7 +223,7 @@ export default function FormMutasiLengkap({
         tanggalLahir: "",
         agama: "Islam",
         keluargaId: "",
-        clusterdesaId: "",
+        clusterdesaId: defaultClusterdesaId, // auto-fill wilayah RT yang login
         keterangan: "Meninggal Dunia",
       });
     }
