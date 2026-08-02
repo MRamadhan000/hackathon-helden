@@ -28,6 +28,7 @@ export interface SurveiKelayakan {
   tahunPeriode: string;
   createdBy: string;
   approvedBy?: string | null;
+  programId?: string | null;
   createdAt: string;
   updatedAt: string;
 }

@@ -27,9 +27,22 @@ function mapSurveiKelayakanFromDb(row: any): SurveiKelayakan {
     tahunPeriode: row.tahun_periode,
     createdBy: row.created_by,
     approvedBy: row.approved_by,
+    programId: row.program_id ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
+}
+
+/** Ambil program terbaru berdasarkan created_at. Mengembalikan null jika belum ada program. */
+async function getLatestProgramId(supabase: ReturnType<typeof createClient>): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("program")
+    .select("id")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error || !data) return null;
+  return data.id as string;
 }
 
 function mapSurveiKelayakanLogFromDb(row: any): SurveiKelayakanLog {
@@ -98,6 +111,9 @@ export async function submitSurveiKelayakan(
   const supabase = createClient();
   const surveiId = crypto.randomUUID();
 
+  // Ambil program terbaru (created_at DESC) untuk di-link ke survei ini
+  const latestProgramId = await getLatestProgramId(supabase);
+
   const dbPayload = {
     id: surveiId,
     penduduk_id: payload.pendudukId,
@@ -116,6 +132,7 @@ export async function submitSurveiKelayakan(
     status: "PENDING",
     tahun_periode: payload.tahunPeriode || "2026",
     created_by: actorId,
+    program_id: latestProgramId, // FK ke program terbaru, null jika belum ada program
   };
 
   const { data, error } = await supabase
