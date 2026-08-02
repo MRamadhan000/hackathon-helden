@@ -14,7 +14,7 @@ import type { MutasiResubmitPayload, MutasiSubmitPayload } from "@/types/mutasi"
 import { mutasiOfflineDB, OfflineMutasiItem } from "@/lib/mutasiOfflineDB";
 import { useLiveQuery } from "dexie-react-hooks";
 
-// ─────────────────────────── TYPES ───────────────────────────
+// ──────────se───────────────── TYPES ───────────────────────────
 
 interface RiwayatMutasiItem {
   id: string;

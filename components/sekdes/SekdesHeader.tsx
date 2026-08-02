@@ -21,7 +21,7 @@ export default function SekdesHeader({
       localStorage.removeItem("mock_user_name");
       sessionStorage.clear();
     }
-    router.push("/auth/login/sekdes");
+    router.push("/auth/login");
   };
 
   return (

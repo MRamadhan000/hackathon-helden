@@ -253,7 +253,7 @@ function SekdesDashboardContent() {
             </div>
 
             <Link
-              href="/login"
+              href="/auth/login"
               className="px-3.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold rounded-xl transition cursor-pointer"
             >
               🚪 Keluar
