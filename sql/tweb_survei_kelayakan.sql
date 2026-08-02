@@ -20,6 +20,8 @@ create table public.tweb_survei_kelayakan (
   created_at timestamp with time zone null default CURRENT_TIMESTAMP,
   updated_at timestamp with time zone null default CURRENT_TIMESTAMP,
   sumber_air text null,
+  program_id character varying(36) null,
   constraint tweb_survei_kelayakan_pkey primary key (id),
-  constraint tweb_survei_kelayakan_penduduk_id_fkey foreign KEY (penduduk_id) references tweb_penduduk (id) on delete CASCADE
+  constraint tweb_survei_kelayakan_penduduk_id_fkey foreign KEY (penduduk_id) references tweb_penduduk (id) on delete CASCADE,
+  constraint tweb_survei_kelayakan_program_id_fkey foreign KEY (program_id) references program (id) on update CASCADE on delete RESTRICT
 ) TABLESPACE pg_default;
