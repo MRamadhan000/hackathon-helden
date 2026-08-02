@@ -1,59 +1,40 @@
--- =============================================
--- Table: public.penerima
--- Penerima benefit / program
--- =============================================
+create table public.penerima (
+  id character varying(36) not null,
+  program_id character varying(36) not null,
+  penduduk_id character varying(36) not null,
+  area_location_id character varying(36) not null,
+  created_by character varying(36) not null,
+  status character varying(50) not null default 'PENDING'::character varying,
+  catatan text null,
+  created_at timestamp without time zone null default now(),
+  updated_at timestamp without time zone null default now(),
+  nominal numeric(18, 2) null,
+  constraint penerima_pkey primary key (id),
+  constraint penerima_area_location_fkey foreign KEY (area_location_id) references tweb_clusterdesa (id) on update CASCADE on delete RESTRICT,
+  constraint penerima_penduduk_fkey foreign KEY (penduduk_id) references tweb_penduduk (id) on update CASCADE on delete RESTRICT,
+  constraint penerima_program_fkey foreign KEY (program_id) references program (id) on update CASCADE on delete RESTRICT,
+  constraint penerima_status_check check (
+    (
+      (status)::text = any (
+        (
+          array[
+            'PENDING'::character varying,
+            'APPROVED'::character varying,
+            'REJECTED'::character varying,
+            'DISTRIBUTED'::character varying
+          ]
+        )::text[]
+      )
+    )
+  )
+) TABLESPACE pg_default;
 
-DROP TABLE IF EXISTS public.penerima CASCADE;
+create index IF not exists idx_penerima_program_id on public.penerima using btree (program_id) TABLESPACE pg_default;
 
-CREATE TABLE public.penerima (
-    id                  character varying(36)   NOT NULL,
-    program_id          character varying(36)   NOT NULL,
-    penduduk_id         character varying(36)   NOT NULL,   -- orang yang menerima benefit
-    area_location_id    character varying(36)   NOT NULL,   -- FK ke tweb_clusterdesa
-    created_by          character varying(36)   NOT NULL,   -- user yang track/input
+create index IF not exists idx_penerima_penduduk_id on public.penerima using btree (penduduk_id) TABLESPACE pg_default;
 
-    status              character varying(50)   NOT NULL DEFAULT 'PENDING',
-    catatan             text                    NULL,
+create index IF not exists idx_penerima_area_location_id on public.penerima using btree (area_location_id) TABLESPACE pg_default;
 
-    created_at          timestamp without time zone DEFAULT now(),
-    updated_at          timestamp without time zone DEFAULT now(),
+create index IF not exists idx_penerima_created_by on public.penerima using btree (created_by) TABLESPACE pg_default;
 
-    CONSTRAINT penerima_pkey PRIMARY KEY (id),
-
-    CONSTRAINT penerima_program_fkey
-        FOREIGN KEY (program_id)
-        REFERENCES public.program (id)
-        ON UPDATE CASCADE
-        ON DELETE RESTRICT,
-
-    CONSTRAINT penerima_penduduk_fkey
-        FOREIGN KEY (penduduk_id)
-        REFERENCES public.tweb_penduduk (id)
-        ON UPDATE CASCADE
-        ON DELETE RESTRICT,
-
-    CONSTRAINT penerima_area_location_fkey
-        FOREIGN KEY (area_location_id)
-        REFERENCES public.tweb_clusterdesa (id)
-        ON UPDATE CASCADE
-        ON DELETE RESTRICT,
-
-    CONSTRAINT penerima_status_check
-        CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED', 'DISTRIBUTED'))
-);
-
--- Index
-CREATE INDEX idx_penerima_program_id 
-    ON public.penerima (program_id);
-
-CREATE INDEX idx_penerima_penduduk_id 
-    ON public.penerima (penduduk_id);
-
-CREATE INDEX idx_penerima_area_location_id 
-    ON public.penerima (area_location_id);
-
-CREATE INDEX idx_penerima_created_by 
-    ON public.penerima (created_by);
-
-CREATE INDEX idx_penerima_status 
-    ON public.penerima (status);
+create index IF not exists idx_penerima_status on public.penerima using btree (status) TABLESPACE pg_default;

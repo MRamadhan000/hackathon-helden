@@ -1,14 +1,20 @@
 // app/sekdes/program/page.tsx
 "use client";
 
-import { useState, useMemo, Suspense } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useProgram } from "@/hooks/operational/useProgram";
 import { useSiskeudes } from "@/hooks/operational/useSiskeudes";
+import { usePenerima } from "@/hooks/operational/usePenerima";
 import { useAuth } from "@/hooks/useAuth";
+import { getPendudukList } from "@/services/core/penduduk.service";
+import { getClusterDesa } from "@/services/core/clusterDesa.service";
+import type { Penduduk } from "@/types/penduduk";
+import type { ClusterDesa } from "@/types/clusterDesa";
 import type { Program, CreateProgramRequest, UpdateProgramRequest } from "@/types/program";
 import type { Siskeudes } from "@/services/operational/siskeudes.service";
+import type { Penerima, StatusPenerima, CreatePenerimaRequest } from "@/types/penerima";
 
 /* ─── helpers ─── */
 function rupiah(n: number) {
@@ -441,6 +447,411 @@ function EditProgramModal({
 }
 
 /* ═══════════════════════════════════════════════
+   PENERIMA PANEL — side panel per program
+═══════════════════════════════════════════════ */
+const STATUS_META: Record<StatusPenerima, { label: string; cls: string; dot: string }> = {
+  PENDING:     { label: "Menunggu",   cls: "bg-amber-50 text-amber-800 border-amber-200",      dot: "bg-amber-400" },
+  APPROVED:    { label: "Disetujui",  cls: "bg-blue-50 text-blue-800 border-blue-200",         dot: "bg-blue-500" },
+  REJECTED:    { label: "Ditolak",    cls: "bg-rose-50 text-rose-800 border-rose-200",         dot: "bg-rose-400" },
+  DISTRIBUTED: { label: "Disalurkan",cls: "bg-emerald-50 text-emerald-800 border-emerald-200", dot: "bg-emerald-500" },
+};
+
+function PenerimaPanel({
+  program,
+  userId,
+  onClose,
+}: {
+  program: Program;
+  userId: string;
+  onClose: () => void;
+}) {
+  const { data, stats, isLoading, error, tambah, ubahStatus, hapus, refresh } = usePenerima(
+    { programId: program.id }
+  );
+
+  const [filterStatus, setFilterStatus] = useState<StatusPenerima | "SEMUA">("SEMUA");
+  const [search, setSearch] = useState("");
+  const [showAdd, setShowAdd] = useState(false);
+  const [detailItem, setDetailItem] = useState<Penerima | null>(null);
+  const [notif, setNotif] = useState<{ type: "ok" | "err"; msg: string } | null>(null);
+
+  // --- Master data untuk form ---
+  const [pendudukList, setPendudukList] = useState<Penduduk[]>([]);
+  const [areaList, setAreaList] = useState<ClusterDesa[]>([]);
+  const [masterLoading, setMasterLoading] = useState(false);
+
+  // Form selected state
+  const [selectedPenduduk, setSelectedPenduduk] = useState<Penduduk | null>(null);
+  const [selectedArea, setSelectedArea] = useState<ClusterDesa | null>(null);
+  const [catatan, setCatatan] = useState("");
+  const [pendudukSearch, setPendudukSearch] = useState("");
+  const [areaSearch, setAreaSearch] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [formErr, setFormErr] = useState("");
+
+  // Fetch master data saat form dibuka
+  useEffect(() => {
+    if (!showAdd) return;
+    setMasterLoading(true);
+    Promise.all([getPendudukList(), getClusterDesa()])
+      .then(([p, a]) => { setPendudukList(p); setAreaList(a); })
+      .catch(() => {})
+      .finally(() => setMasterLoading(false));
+  }, [showAdd]);
+
+  const filteredPenduduk = useMemo(() => {
+    if (!pendudukSearch.trim()) return pendudukList.slice(0, 50);
+    const q = pendudukSearch.toLowerCase();
+    return pendudukList.filter(
+      (p) => p.nama.toLowerCase().includes(q) || p.nik.includes(q)
+    ).slice(0, 50);
+  }, [pendudukList, pendudukSearch]);
+
+  const filteredArea = useMemo(() => {
+    if (!areaSearch.trim()) return areaList;
+    const q = areaSearch.toLowerCase();
+    return areaList.filter((a) => a.nama.toLowerCase().includes(q) || a.jenis.toLowerCase().includes(q));
+  }, [areaList, areaSearch]);
+
+  const showNotif = (type: "ok" | "err", msg: string) => {
+    setNotif({ type, msg });
+    setTimeout(() => setNotif(null), 3500);
+  };
+
+  const resetForm = () => {
+    setSelectedPenduduk(null);
+    setSelectedArea(null);
+    setCatatan("");
+    setPendudukSearch("");
+    setAreaSearch("");
+    setFormErr("");
+  };
+
+  const filtered = useMemo(() => {
+    let list = data;
+    if (filterStatus !== "SEMUA") list = list.filter((d) => d.status === filterStatus);
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter(
+        (d) => (d.pendudukId ?? "").toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [data, filterStatus, search]);
+
+  const handleTambah = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedPenduduk) { setFormErr("Pilih penduduk penerima."); return; }
+    if (!selectedArea) { setFormErr("Pilih wilayah / area."); return; }
+    setSaving(true);
+    try {
+      await tambah({
+        programId: program.id,
+        pendudukId: selectedPenduduk.id,
+        areaLocationId: selectedArea.id,
+        createdBy: userId,
+        catatan: catatan || null,
+      } as CreatePenerimaRequest);
+      resetForm();
+      setShowAdd(false);
+      showNotif("ok", `${selectedPenduduk.nama} berhasil ditambahkan sebagai penerima.`);
+    } catch (ex) {
+      setFormErr((ex as Error).message);
+    } finally { setSaving(false); }
+  };
+
+  const handleUbahStatus = async (id: string, status: StatusPenerima) => {
+    try {
+      await ubahStatus(id, { status });
+      showNotif("ok", `Status → ${STATUS_META[status].label}`);
+      setDetailItem(null);
+    } catch (e) { showNotif("err", (e as Error).message); }
+  };
+
+  const handleHapus = async (id: string) => {
+    try {
+      await hapus(id);
+      showNotif("ok", "Penerima dihapus.");
+      setDetailItem(null);
+    } catch (e) { showNotif("err", (e as Error).message); }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end" onClick={onClose}>
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-slate-900/30 backdrop-blur-sm" />
+
+      {/* Panel */}
+      <div
+        className="relative w-full md:w-[520px] bg-white h-full shadow-2xl flex flex-col overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="bg-indigo-600 px-5 py-4 flex items-start justify-between gap-3 flex-shrink-0">
+          <div>
+            <p className="text-[9px] font-bold text-indigo-300 uppercase tracking-wider">Penerima Program</p>
+            <h3 className="text-sm font-extrabold text-white leading-snug mt-0.5">{program.nama}</h3>
+            <div className="flex gap-3 mt-1.5 text-[10px] font-bold text-indigo-200">
+              <span>{stats.total} total</span>
+              <span className="text-amber-300">{stats.pending} menunggu</span>
+              <span className="text-green-300">{stats.distributed} disalurkan</span>
+            </div>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center cursor-pointer font-bold flex-shrink-0">✕</button>
+        </div>
+
+        {/* Notif */}
+        {notif && (
+          <div className={`mx-5 mt-3 p-2.5 rounded-xl text-[11px] font-semibold border flex-shrink-0 ${notif.type === "ok" ? "bg-emerald-50 border-emerald-200 text-emerald-900" : "bg-rose-50 border-rose-200 text-rose-900"}`}>
+            {notif.msg}
+          </div>
+        )}
+
+        {/* Controls */}
+        <div className="px-5 py-3 border-b border-slate-100 flex items-center gap-2 flex-shrink-0">
+          <input
+            value={search} onChange={(e) => setSearch(e.target.value)}
+            placeholder="Cari ID penduduk..."
+            className="flex-1 bg-slate-50 border border-slate-200 text-[11px] font-medium text-slate-800 py-1.5 px-2.5 rounded-lg focus:outline-none focus:border-indigo-400"
+          />
+          <button
+            onClick={() => { setShowAdd((v) => !v); if (showAdd) resetForm(); }}
+            className={`px-3 py-1.5 text-[11px] font-bold rounded-lg cursor-pointer whitespace-nowrap transition ${
+              showAdd ? "bg-slate-200 text-slate-700" : "bg-indigo-600 hover:bg-indigo-700 text-white"
+            }`}
+          >
+            {showAdd ? "✕ Batal" : "+ Tambah"}
+          </button>
+        </div>
+
+        {/* ── Add form — searchable picker ── */}
+        {showAdd && (
+          <form onSubmit={handleTambah} className="px-5 py-4 bg-slate-50 border-b border-slate-200 space-y-4 flex-shrink-0 overflow-y-auto max-h-[60vh]">
+            {formErr && <p className="text-[11px] text-rose-700 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2">⚠️ {formErr}</p>}
+
+            {masterLoading ? (
+              <p className="text-center text-[11px] text-slate-400 py-4">Memuat data penduduk & wilayah...</p>
+            ) : (
+              <>
+                {/* ── Pilih Penduduk ── */}
+                <div>
+                  <label className="block text-[9px] font-bold uppercase text-slate-500 mb-1.5">Penduduk Penerima *</label>
+
+                  {/* Selected indicator */}
+                  {selectedPenduduk ? (
+                    <div className="flex items-center justify-between gap-2 bg-indigo-50 border border-indigo-200 rounded-xl px-3 py-2.5 mb-2">
+                      <div>
+                        <p className="text-xs font-bold text-indigo-900">{selectedPenduduk.nama}</p>
+                        <p className="text-[10px] font-mono text-indigo-400">NIK: {selectedPenduduk.nik}</p>
+                      </div>
+                      <button type="button" onClick={() => setSelectedPenduduk(null)}
+                        className="text-[10px] font-bold text-indigo-500 hover:text-rose-600 cursor-pointer">✕ Ganti</button>
+                    </div>
+                  ) : (
+                    <input
+                      value={pendudukSearch}
+                      onChange={(e) => setPendudukSearch(e.target.value)}
+                      placeholder="Cari nama atau NIK penduduk..."
+                      className="w-full bg-white border border-slate-200 text-[11px] font-medium text-slate-800 py-2 px-3 rounded-xl focus:outline-none focus:border-indigo-400 mb-1.5"
+                    />
+                  )}
+
+                  {/* Dropdown list */}
+                  {!selectedPenduduk && filteredPenduduk.length > 0 && (
+                    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm max-h-40 overflow-y-auto">
+                      {filteredPenduduk.map((p) => (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => { setSelectedPenduduk(p); setPendudukSearch(""); }}
+                          className="w-full text-left px-3 py-2.5 hover:bg-indigo-50 border-b border-slate-50 last:border-0 cursor-pointer transition"
+                        >
+                          <p className="text-[11px] font-bold text-slate-900">{p.nama}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[10px] font-mono text-slate-400">NIK: {p.nik}</span>
+                            <span className="text-[9px] text-slate-300">·</span>
+                            <span className="text-[10px] text-slate-400">{p.jenisKelamin}</span>
+                          </div>
+                        </button>
+                      ))}
+                      {pendudukList.length > 50 && !pendudukSearch && (
+                        <p className="text-[10px] text-slate-400 text-center py-2">Ketik nama/NIK untuk cari lebih spesifik</p>
+                      )}
+                    </div>
+                  )}
+                  {!selectedPenduduk && pendudukSearch && filteredPenduduk.length === 0 && (
+                    <p className="text-[11px] text-slate-400 px-1">Tidak ada penduduk ditemukan.</p>
+                  )}
+                </div>
+
+                {/* ── Pilih Area / Clusterdesa ── */}
+                <div>
+                  <label className="block text-[9px] font-bold uppercase text-slate-500 mb-1.5">Wilayah / Area *</label>
+
+                  {selectedArea ? (
+                    <div className="flex items-center justify-between gap-2 bg-violet-50 border border-violet-200 rounded-xl px-3 py-2.5 mb-2">
+                      <div>
+                        <p className="text-xs font-bold text-violet-900">{selectedArea.nama}</p>
+                        <p className="text-[10px] text-violet-400">{selectedArea.jenis}</p>
+                      </div>
+                      <button type="button" onClick={() => setSelectedArea(null)}
+                        className="text-[10px] font-bold text-violet-500 hover:text-rose-600 cursor-pointer">✕ Ganti</button>
+                    </div>
+                  ) : (
+                    <input
+                      value={areaSearch}
+                      onChange={(e) => setAreaSearch(e.target.value)}
+                      placeholder="Cari nama wilayah / RT / RW..."
+                      className="w-full bg-white border border-slate-200 text-[11px] font-medium text-slate-800 py-2 px-3 rounded-xl focus:outline-none focus:border-violet-400 mb-1.5"
+                    />
+                  )}
+
+                  {!selectedArea && (
+                    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm max-h-36 overflow-y-auto">
+                      {filteredArea.map((a) => (
+                        <button
+                          key={a.id}
+                          type="button"
+                          onClick={() => { setSelectedArea(a); setAreaSearch(""); }}
+                          className="w-full text-left px-3 py-2 hover:bg-violet-50 border-b border-slate-50 last:border-0 cursor-pointer transition"
+                        >
+                          <div className="flex items-center justify-between">
+                            <p className="text-[11px] font-bold text-slate-900">{a.nama}</p>
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 bg-violet-100 text-violet-700 rounded">{a.jenis}</span>
+                          </div>
+                          {a.ketuaWilayah && (
+                            <p className="text-[10px] text-slate-400 mt-0.5">Ketua: {a.ketuaWilayah}</p>
+                          )}
+                        </button>
+                      ))}
+                      {filteredArea.length === 0 && (
+                        <p className="text-[11px] text-slate-400 text-center py-3">Tidak ada wilayah ditemukan.</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* ── Catatan ── */}
+                <div>
+                  <label className="block text-[9px] font-bold uppercase text-slate-500 mb-1">Catatan</label>
+                  <input value={catatan} onChange={(e) => setCatatan(e.target.value)}
+                    placeholder="Keterangan opsional..."
+                    className="w-full bg-white border border-slate-200 text-[11px] font-medium text-slate-800 py-2 px-3 rounded-xl focus:outline-none focus:border-indigo-400" />
+                </div>
+
+                <button type="submit" disabled={saving || !selectedPenduduk || !selectedArea}
+                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-[11px] font-bold rounded-xl cursor-pointer">
+                  {saving ? "Menyimpan..." : `Tambah ${selectedPenduduk?.nama ?? "Penerima"}`}
+                </button>
+              </>
+            )}
+          </form>
+        )}
+
+        {/* Status filter tabs */}
+        <div className="px-5 py-2 border-b border-slate-100 flex gap-1 overflow-x-auto flex-shrink-0">
+          {(["SEMUA", "PENDING", "APPROVED", "DISTRIBUTED", "REJECTED"] as const).map((s) => (
+            <button key={s} onClick={() => setFilterStatus(s)}
+              className={`px-2.5 py-1 text-[10px] font-bold rounded-lg whitespace-nowrap cursor-pointer transition ${
+                filterStatus === s ? "bg-indigo-100 text-indigo-800" : "text-slate-400 hover:text-slate-700"
+              }`}>
+              {s === "SEMUA" ? "Semua" : STATUS_META[s].label}
+              {s !== "SEMUA" && (
+                <span className="ml-1 text-[9px] opacity-70">
+                  {s === "PENDING" ? stats.pending : s === "APPROVED" ? stats.approved : s === "DISTRIBUTED" ? stats.distributed : stats.rejected}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* List */}
+        <div className="flex-1 overflow-y-auto">
+          {error && (
+            <div className="m-5 p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-[11px] flex justify-between">
+              <span>{error.message}</span>
+              <button onClick={() => refresh({ programId: program.id })} className="underline font-bold">Retry</button>
+            </div>
+          )}
+          {isLoading ? (
+            <div className="py-12 text-center text-xs text-slate-400">Memuat data...</div>
+          ) : filtered.length === 0 ? (
+            <div className="py-12 text-center space-y-1">
+              <p className="text-xl">👥</p>
+              <p className="text-[11px] font-bold text-slate-400">
+                {filterStatus !== "SEMUA" ? `Tidak ada penerima "${STATUS_META[filterStatus].label}".` : "Belum ada penerima."}
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {filtered.map((item) => {
+                const meta = STATUS_META[item.status];
+                const isDetail = detailItem?.id === item.id;
+                return (
+                  <div key={item.id} className={`px-5 py-3.5 transition ${item.status === "PENDING" ? "bg-amber-50/30" : ""}`}>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-slate-900 truncate">{item.pendudukNama ?? "Penduduk"}</p>
+                        {item.pendudukNik && <p className="text-[10px] font-mono text-slate-400">NIK: {item.pendudukNik}</p>}
+                        <p className="text-[10px] text-slate-400">{item.areaLocationNama ?? "—"}</p>
+                      </div>
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[9px] font-bold ${meta.cls}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${meta.dot}`} />
+                          {meta.label}
+                        </span>
+                        <button
+                          onClick={() => setDetailItem(isDetail ? null : item)}
+                          className="w-6 h-6 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 text-[10px] flex items-center justify-center cursor-pointer"
+                        >
+                          {isDetail ? "▲" : "▼"}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Inline action panel */}
+                    {isDetail && (
+                      <div className="mt-3 space-y-2.5 pl-0 border-t border-slate-100 pt-3">
+                        {/* Status actions */}
+                        {item.status === "PENDING" && (
+                          <div className="flex gap-1.5">
+                            <button onClick={() => handleUbahStatus(item.id, "APPROVED")}
+                              className="flex-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold rounded-lg cursor-pointer">✓ Setujui</button>
+                            <button onClick={() => handleUbahStatus(item.id, "REJECTED")}
+                              className="flex-1 py-1.5 bg-rose-100 hover:bg-rose-200 text-rose-800 border border-rose-200 text-[10px] font-bold rounded-lg cursor-pointer">✕ Tolak</button>
+                          </div>
+                        )}
+                        {item.status === "APPROVED" && (
+                          <button onClick={() => handleUbahStatus(item.id, "DISTRIBUTED")}
+                            className="w-full py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold rounded-lg cursor-pointer">📦 Salurkan</button>
+                        )}
+                        {/* Hapus hanya PENDING */}
+                        {item.status === "PENDING" && (
+                          <button onClick={() => handleHapus(item.id)}
+                            className="w-full py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[10px] font-bold rounded-lg cursor-pointer">🗑 Hapus</button>
+                        )}
+                        {item.catatan && (
+                          <p className="text-[10px] text-slate-500 bg-slate-50 rounded-lg px-3 py-2 border border-slate-200">{item.catatan}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 py-4 border-t border-slate-100 flex-shrink-0">
+          <button onClick={onClose} className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl cursor-pointer">Tutup</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
    MAIN PAGE
 ═══════════════════════════════════════════════ */
 function ProgramPage() {
@@ -455,6 +866,9 @@ function ProgramPage() {
   const [mode, setMode] = useState<null | "add-step1" | "add-step2" | "edit">(null);
   const [selectedSiskeudes, setSelectedSiskeudes] = useState<Siskeudes | null>(null);
   const [editTarget, setEditTarget] = useState<Program | null>(null);
+
+  // Penerima panel state
+  const [penerimaProgram, setPenerimaProgram] = useState<Program | null>(null);
 
   const [search, setSearch] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
@@ -613,6 +1027,12 @@ function ProgramPage() {
                       <td className="px-4 py-3.5">
                         <div className="flex justify-end items-center gap-1">
                           <button
+                            onClick={() => setPenerimaProgram(item)}
+                            className="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-[11px] font-bold rounded-lg cursor-pointer"
+                          >
+                            👥 Penerima
+                          </button>
+                          <button
                             onClick={() => { setEditTarget(item); setMode("edit"); }}
                             className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold rounded-lg cursor-pointer"
                           >
@@ -677,6 +1097,15 @@ function ProgramPage() {
           item={editTarget}
           onSave={handleEdit}
           onClose={closeAll}
+        />
+      )}
+
+      {/* ── Penerima Side Panel ── */}
+      {penerimaProgram && currentUser && (
+        <PenerimaPanel
+          program={penerimaProgram}
+          userId={currentUser.id}
+          onClose={() => setPenerimaProgram(null)}
         />
       )}
     </div>
