@@ -450,10 +450,10 @@ function EditProgramModal({
    PENERIMA PANEL — side panel per program
 ═══════════════════════════════════════════════ */
 const STATUS_META: Record<StatusPenerima, { label: string; cls: string; dot: string }> = {
-  PENDING:     { label: "Menunggu",   cls: "bg-amber-50 text-amber-800 border-amber-200",      dot: "bg-amber-400" },
-  APPROVED:    { label: "Disetujui",  cls: "bg-blue-50 text-blue-800 border-blue-200",         dot: "bg-blue-500" },
-  REJECTED:    { label: "Ditolak",    cls: "bg-rose-50 text-rose-800 border-rose-200",         dot: "bg-rose-400" },
-  DISTRIBUTED: { label: "Disalurkan",cls: "bg-emerald-50 text-emerald-800 border-emerald-200", dot: "bg-emerald-500" },
+  PENDING:     { label: "Belum Diterima", cls: "bg-amber-50 text-amber-800 border-amber-200",   dot: "bg-amber-400" },
+  APPROVED:    { label: "Disetujui",      cls: "bg-blue-50 text-blue-800 border-blue-200",      dot: "bg-blue-500" },
+  REJECTED:    { label: "Ditolak",        cls: "bg-rose-50 text-rose-800 border-rose-200",      dot: "bg-rose-400" },
+  DISTRIBUTED: { label: "Selesai dibagikan", cls: "bg-emerald-50 text-emerald-800 border-emerald-200", dot: "bg-emerald-500" },
 };
 
 function PenerimaPanel({
@@ -823,7 +823,7 @@ function PenerimaPanel({
                         )}
                         {item.status === "APPROVED" && (
                           <button onClick={() => handleUbahStatus(item.id, "DISTRIBUTED")}
-                            className="w-full py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold rounded-lg cursor-pointer">📦 Salurkan</button>
+                            className="w-full py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold rounded-lg cursor-pointer">📦 Bagikan & Selesaikan</button>
                         )}
                         {/* Hapus hanya PENDING */}
                         {item.status === "PENDING" && (
@@ -1026,12 +1026,12 @@ function ProgramPage() {
                       </td>
                       <td className="px-4 py-3.5">
                         <div className="flex justify-end items-center gap-1">
-                          <button
-                            onClick={() => setPenerimaProgram(item)}
-                            className="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-[11px] font-bold rounded-lg cursor-pointer"
+                          <Link
+                            href={`/sekdes/program/${item.id}?tahun=${tahun}`}
+                            className="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-[11px] font-bold rounded-lg cursor-pointer flex items-center gap-1"
                           >
                             👥 Penerima
-                          </button>
+                          </Link>
                           <button
                             onClick={() => { setEditTarget(item); setMode("edit"); }}
                             className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold rounded-lg cursor-pointer"

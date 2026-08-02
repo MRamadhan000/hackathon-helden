@@ -42,8 +42,8 @@ export async function getPenerimaList(filters?: PenerimaFilters): Promise<Peneri
     .select("*")
     .order("created_at", { ascending: false });
 
-  if (filters?.programId)    q = q.eq("program_id", filters.programId);
-  if (filters?.status)       q = q.eq("status", filters.status);
+  if (filters?.programId) q = q.eq("program_id", filters.programId);
+  if (filters?.status) q = q.eq("status", filters.status);
   if (filters?.areaLocationId) q = q.eq("area_location_id", filters.areaLocationId);
 
   const { data, error } = await q;
