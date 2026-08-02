@@ -262,6 +262,20 @@ export default function PublicLandingPage() {
           </div>
         </section>
 
+        {/* BANNER INFORMASI DATA SIMULASI / FAKE */}
+        <div className="p-4 bg-amber-50 border border-amber-200/80 rounded-2xl flex items-start gap-3">
+          <span className="text-base mt-0.5">⚠️</span>
+          <div className="text-xs text-amber-900 space-y-0.5 leading-relaxed">
+            <span className="font-extrabold block">
+              Informasi Data Simulasi
+            </span>
+            <p className="text-amber-800/90 font-medium">
+              Seluruh data yang ditampilkan di portal ini bersifat fiktif dan
+              hanya digunakan untuk keperluan simulasi/demonstrasi sistem.
+            </p>
+          </div>
+        </div>
+
         {/* 3. STATISTIK UTAMA PENDUDUK */}
         <section className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-1">
