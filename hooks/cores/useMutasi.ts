@@ -14,7 +14,7 @@ import {
   getMutasiLogs,
 } from "@/services/core/mutasi.service";
 
-export function useMutasi(tahunPeriode?: string) {
+export function useMutasi(tahunPeriode?: string, createdByUserId?: string | null) {
   const [data, setData] = useState<MutasiPengajuan[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
@@ -22,7 +22,7 @@ export function useMutasi(tahunPeriode?: string) {
   const fetchMutasi = useCallback(async () => {
     setIsLoading(true);
     try {
-      const result = await getMutasiList(tahunPeriode);
+      const result = await getMutasiList(tahunPeriode, createdByUserId);
       setData(result);
       setError(null);
     } catch (err) {
@@ -30,7 +30,7 @@ export function useMutasi(tahunPeriode?: string) {
     } finally {
       setIsLoading(false);
     }
-  }, [tahunPeriode]);
+  }, [tahunPeriode, createdByUserId]);
 
   useEffect(() => {
     fetchMutasi();

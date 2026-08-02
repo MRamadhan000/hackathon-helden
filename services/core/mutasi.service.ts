@@ -49,7 +49,10 @@ function mapMutasiLogFromDb(row: any): MutasiLog {
 }
 
 // 1. Dapatkan daftar pengajuan mutasi
-export async function getMutasiList(tahun?: string): Promise<MutasiPengajuan[]> {
+export async function getMutasiList(
+  tahun?: string,
+  createdByUserId?: string | null
+): Promise<MutasiPengajuan[]> {
   const supabase = createClient();
   let query = supabase
     .from("tweb_mutasi_pengajuan")
@@ -58,6 +61,14 @@ export async function getMutasiList(tahun?: string): Promise<MutasiPengajuan[]> 
 
   if (tahun) {
     query = query.eq("tahun_periode", tahun);
+  }
+
+  if (createdByUserId) {
+    try {
+      query = query.or(`created_by_user_id.eq.${createdByUserId},created_by.eq.${createdByUserId}`);
+    } catch {
+      query = query.eq("created_by", createdByUserId);
+    }
   }
 
   const { data, error } = await query;

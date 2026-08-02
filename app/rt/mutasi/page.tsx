@@ -116,9 +116,9 @@ function MutasiContent() {
   const [resubmitSource, setResubmitSource] = useState<RiwayatMutasiItem | null>(null);
 
   // Real Supabase Hooks Connection
-  const { data: realMutasiList, isLoading: isLoadingMutasi, submit: submitMutasiHook, resubmit: resubmitMutasiHook } = useMutasi(tahunPeriode);
+  const { user: currentUser, isLoading: isAuthLoading } = useAuth();
+  const { data: realMutasiList, isLoading: isLoadingMutasi, submit: submitMutasiHook, resubmit: resubmitMutasiHook } = useMutasi(tahunPeriode, currentUser?.id ?? null);
   const { data: realPendudukList } = usePenduduk();
-  const { user: currentUser } = useAuth();
 
   // Map Real Data Warga ke Format PendudukRT
   const daftarWarga: PendudukRT[] = useMemo(() => {
@@ -473,7 +473,7 @@ function MutasiContent() {
           </div>
 
           {/* LOADING STATE */}
-          {isLoadingMutasi ? (
+          {isLoadingMutasi || isAuthLoading ? (
             <div className="p-10 text-center text-xs text-slate-400">
               Memuat data mutasi dari Supabase...
             </div>
