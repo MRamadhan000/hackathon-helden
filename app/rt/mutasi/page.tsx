@@ -8,6 +8,7 @@ import { PendudukRT } from "@/components/rt/TableWarga";
 import { useMutasi } from "@/hooks/cores/useMutasi";
 import { usePenduduk } from "@/hooks/cores/usePenduduk";
 import { useAuth } from "@/hooks/useAuth";
+import type { MutasiResubmitPayload, MutasiSubmitPayload } from "@/types/mutasi";
 
 interface RiwayatMutasiItem {
   id: string;
@@ -23,6 +24,9 @@ interface RiwayatMutasiItem {
   rawStatus?: string;
   reqMethod?: string;
   feedbackSekdes?: string | null;
+  parent?: string | null;
+  createdBy?: string;
+  approvedBy?: string | null;
 }
 
 interface MutasiFormData {
@@ -79,7 +83,16 @@ function mapMutasiToRiwayatItem(m: any): RiwayatMutasiItem {
     rawStatus: m.status,
     reqMethod: m.reqMethod || m.tipeProses,
     feedbackSekdes: m.feedbackSekdes,
+    parent: m.parent,
+    createdBy: m.createdBy,
+    approvedBy: m.approvedBy,
   };
+}
+
+function mapJenisMutasiToSubAksi(jenis?: string): "baru" | "nonaktif" | "koreksi" {
+  if (jenis === "Non-Aktif") return "nonaktif";
+  if (jenis === "Koreksi Data") return "koreksi";
+  return "baru";
 }
 
 const FILTER_JENIS = [
@@ -100,9 +113,10 @@ function MutasiContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterJenis, setFilterJenis] = useState("Semua");
   const [selectedDetailItem, setSelectedDetailItem] = useState<RiwayatMutasiItem | null>(null);
+  const [resubmitSource, setResubmitSource] = useState<RiwayatMutasiItem | null>(null);
 
   // Real Supabase Hooks Connection
-  const { data: realMutasiList, isLoading: isLoadingMutasi, submit: submitMutasiHook } = useMutasi(tahunPeriode);
+  const { data: realMutasiList, isLoading: isLoadingMutasi, submit: submitMutasiHook, resubmit: resubmitMutasiHook } = useMutasi(tahunPeriode);
   const { data: realPendudukList } = usePenduduk();
   const { user: currentUser } = useAuth();
 
@@ -150,6 +164,24 @@ function MutasiContent() {
       return matchSearch && matchFilter;
     });
   }, [riwayatMutasi, searchQuery, filterJenis]);
+
+  const openNewMutasiModal = () => {
+    setResubmitSource(null);
+    setSelectedNik("");
+    setShowModal(true);
+  };
+
+  const openResubmitModal = (item: RiwayatMutasiItem) => {
+    setSelectedDetailItem(null);
+    setResubmitSource(item);
+    setSelectedNik(item.nik);
+    setShowModal(true);
+  };
+
+  const closeMutasiModal = () => {
+    setShowModal(false);
+    setResubmitSource(null);
+  };
 
   const groupedMutasi = useMemo(() => {
     return {
@@ -310,26 +342,50 @@ function MutasiContent() {
         }
       }
 
-      await submitMutasiHook(
-        {
-          nik,
-          nama: isNonAktif ? null : (nama || wargaReferensi?.nama || null),
-          tempatLahir: isNonAktif ? null : (tempatLahir || wargaReferensi?.tempatLahir || null),
-          tanggalLahir: isNonAktif ? null : (tanggalLahir || wargaReferensi?.tanggalLahir || null),
-          jenisKelamin: isNonAktif ? null : (jenisKelamin || wargaReferensi?.jenisKelamin || null),
-          agama: isNonAktif ? null : (formData.agama || "Islam"),
-          jenisMutasi: jenisMutasi as any,
-          keterangan: keterangan || null,
-          tipeProses: "OFFLINE",
-          reqMethod: "OFFLINE",
-          tahunPeriode: tahunPeriode,
-          createdBy: currentUser.id,
-        },
-        currentUser.id,
-        "RT"
+      const payload: MutasiSubmitPayload = {
+        nik,
+        nama: isNonAktif ? null : (nama || wargaReferensi?.nama || null),
+        tempatLahir: isNonAktif ? null : (tempatLahir || wargaReferensi?.tempatLahir || null),
+        tanggalLahir: isNonAktif ? null : (tanggalLahir || wargaReferensi?.tanggalLahir || null),
+        jenisKelamin: isNonAktif ? null : (jenisKelamin || wargaReferensi?.jenisKelamin || null),
+        agama: isNonAktif ? null : (formData.agama || "Islam"),
+        jenisMutasi: jenisMutasi as any,
+        keterangan: keterangan || null,
+        tipeProses: "OFFLINE",
+        reqMethod: "OFFLINE",
+        tahunPeriode: tahunPeriode,
+        createdBy: currentUser.id,
+      };
+
+      if (resubmitSource) {
+        const resubmitPayload: MutasiResubmitPayload = {
+          nik: payload.nik,
+          nama: payload.nama || undefined,
+          tempatLahir: payload.tempatLahir || undefined,
+          tanggalLahir: payload.tanggalLahir || undefined,
+          jenisKelamin: payload.jenisKelamin || undefined,
+          agama: payload.agama || undefined,
+          keterangan: payload.keterangan || undefined,
+          tipeProses: payload.tipeProses,
+          reqMethod: payload.reqMethod,
+        };
+
+        await resubmitMutasiHook(
+          resubmitSource.id,
+          resubmitPayload,
+          currentUser.id,
+          "RT"
+        );
+      } else {
+        await submitMutasiHook(payload, currentUser.id, "RT");
+      }
+
+      alert(
+        resubmitSource
+          ? "Pengajuan ulang mutasi berhasil dikirim dengan parent data sebelumnya!"
+          : "Laporan mutasi berhasil dikirimkan ke Sekretaris Desa!"
       );
-      alert("Laporan mutasi berhasil dikirimkan ke Sekretaris Desa!");
-      setShowModal(false);
+      closeMutasiModal();
     } catch (err) {
       console.error(err);
       alert("Terjadi kesalahan saat menyimpan data mutasi: " + (err as Error).message);
@@ -369,7 +425,7 @@ function MutasiContent() {
             {isTahunAktif && (
               <button
                 type="button"
-                onClick={() => setShowModal(true)}
+                onClick={openNewMutasiModal}
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold rounded-xl transition shadow-sm shadow-blue-600/20 cursor-pointer"
               >
                 <span className="text-sm leading-none">+</span>
@@ -522,7 +578,18 @@ function MutasiContent() {
           selectedNik={selectedNik}
           setSelectedNik={setSelectedNik}
           onSubmitMutasi={handleMutasiSubmit}
-          onClose={() => setShowModal(false)}
+          onClose={closeMutasiModal}
+          initialSubAksi={resubmitSource ? mapJenisMutasiToSubAksi(resubmitSource.jenis) : undefined}
+          initialFormDetail={resubmitSource ? {
+            nik: resubmitSource.nik,
+            nama: resubmitSource.nama,
+            jenisKelamin: (resubmitSource.jenisKelamin === "P" ? "P" : "L") as "L" | "P",
+            tempatLahir: resubmitSource.tempatLahir || "Kab. Malang",
+            tanggalLahir: resubmitSource.tanggalLahir || "",
+            keterangan: resubmitSource.keterangan || "",
+          } : undefined}
+          lockSubAksi={!!resubmitSource}
+          resubmitInfo={resubmitSource ? `Mode pengajuan ulang. Parent akan diisi otomatis ke pengajuan sebelumnya: ${resubmitSource.id}` : undefined}
         />
       )}
 
@@ -637,6 +704,41 @@ function MutasiContent() {
                   </div>
                 </div>
 
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-3">
+                  <h4 className="font-extrabold text-slate-900 text-xs border-b border-slate-100 pb-2">
+                    🔗 Tracking Pengajuan
+                  </h4>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold uppercase block">
+                        Dibuat Oleh
+                      </span>
+                      <span className="font-mono font-bold text-slate-900">
+                        {selectedDetailItem.createdBy || "-"}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold uppercase block">
+                        Disetujui / Ditangani Oleh
+                      </span>
+                      <span className="font-mono font-bold text-slate-900">
+                        {selectedDetailItem.approvedBy || "-"}
+                      </span>
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <span className="text-[10px] text-slate-400 font-bold uppercase block">
+                        Parent / Riwayat Revisi
+                      </span>
+                      <span className="font-mono font-bold text-slate-900 break-all">
+                        {selectedDetailItem.parent || "-"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
                 {selectedDetailItem.feedbackSekdes && (
                   <div className="bg-rose-50/60 p-4 rounded-2xl border border-rose-200/80 space-y-1">
                     <span className="text-[10px] text-rose-800 font-extrabold uppercase block">
@@ -645,6 +747,18 @@ function MutasiContent() {
                     <p className="text-slate-800 font-medium leading-relaxed">
                       {selectedDetailItem.feedbackSekdes}
                     </p>
+                  </div>
+                )}
+
+                {selectedDetailItem.rawStatus === "REJECTED" && isTahunAktif && (
+                  <div className="pt-1">
+                    <button
+                      type="button"
+                      onClick={() => openResubmitModal(selectedDetailItem)}
+                      className="w-full px-4 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold rounded-xl transition shadow-sm shadow-blue-600/20 cursor-pointer"
+                    >
+                      Ajukan Ulang dengan Parent Pengajuan Ini
+                    </button>
                   </div>
                 )}
               </div>

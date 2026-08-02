@@ -25,6 +25,7 @@ export interface MutasiPengajuan {
   tahunPeriode: string; // Misal: "2026"
   createdBy: string; // FK ke tweb_penduduk / auth user
   approvedBy?: string | null; // FK ke tweb_penduduk (Sekdes)
+  parent?: string | null; // Tracking pengajuan ulang / revisi
   createdAt: string;
   updatedAt: string;
 }
@@ -54,6 +55,7 @@ export interface MutasiSubmitPayload {
   reqMethod: ReqMethod; // 'OFFLINE' (RT input) | 'ONLINE' (Warga input)
   tahunPeriode: string;
   createdBy: string;
+  parent?: string | null;
 }
 
 export interface MutasiVerifyPayload {

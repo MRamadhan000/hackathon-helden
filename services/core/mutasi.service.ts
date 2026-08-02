@@ -28,6 +28,7 @@ function mapMutasiFromDb(row: any): MutasiPengajuan {
     tahunPeriode: row.tahun_periode,
     createdBy: row.created_by,
     approvedBy: row.approved_by,
+    parent: row.parent,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -56,12 +57,7 @@ export async function getMutasiList(tahun?: string): Promise<MutasiPengajuan[]> 
     .order("created_at", { ascending: false });
 
   if (tahun) {
-    const tahunAngka = Number(tahun);
-    if (!Number.isNaN(tahunAngka)) {
-      const startDate = new Date(Date.UTC(tahunAngka, 0, 1)).toISOString();
-      const endDate = new Date(Date.UTC(tahunAngka + 1, 0, 1)).toISOString();
-      query = query.gte("created_at", startDate).lt("created_at", endDate);
-    }
+    query = query.eq("tahun_periode", tahun);
   }
 
   const { data, error } = await query;
@@ -111,6 +107,7 @@ export async function submitMutasi(
     status: statusAwal,
     tahun_periode: payload.tahunPeriode,
     created_by: payload.createdBy || actorId,
+    parent: payload.parent || null,
   };
 
   const { data, error } = await supabase
@@ -240,40 +237,46 @@ export async function resubmitMutasi(
   const currentMutasi = await getMutasiById(id);
   if (!currentMutasi) throw new Error("Data mutasi tidak ditemukan");
 
-  const updateFields: any = {
-    status: "RESUBMITTED",
-    updated_at: new Date().toISOString(),
+  const mutasiBaruId = crypto.randomUUID();
+  const dbPayload = {
+    id: mutasiBaruId,
+    nik: payload.nik || currentMutasi.nik,
+    nama: payload.nama ?? currentMutasi.nama ?? null,
+    tempat_lahir: payload.tempatLahir ?? currentMutasi.tempatLahir ?? null,
+    tanggal_lahir: payload.tanggalLahir ?? currentMutasi.tanggalLahir ?? null,
+    jenis_kelamin: payload.jenisKelamin ?? currentMutasi.jenisKelamin ?? null,
+    agama: payload.agama ?? currentMutasi.agama ?? null,
+    clusterdesa_id: currentMutasi.clusterdesaId || null,
+    jenis_mutasi: currentMutasi.jenisMutasi,
+    keterangan: payload.keterangan ?? currentMutasi.keterangan ?? null,
+    tipe_proses: payload.tipeProses || currentMutasi.tipeProses,
+    req_method: payload.reqMethod || currentMutasi.reqMethod || currentMutasi.tipeProses,
+    status: "PENDING",
+    feedback_sekdes: null,
+    tahun_periode: currentMutasi.tahunPeriode,
+    created_by: actorId,
+    approved_by: null,
+    parent: currentMutasi.id,
   };
-
-  if (payload.nik) updateFields.nik = payload.nik;
-  if (payload.nama) updateFields.nama = payload.nama;
-  if (payload.tempatLahir) updateFields.tempat_lahir = payload.tempatLahir;
-  if (payload.tanggalLahir) updateFields.tanggal_lahir = payload.tanggalLahir;
-  if (payload.jenisKelamin) updateFields.jenis_kelamin = payload.jenisKelamin;
-  if (payload.agama) updateFields.agama = payload.agama;
-  if (payload.keterangan !== undefined) updateFields.keterangan = payload.keterangan;
-  if (payload.tipeProses) updateFields.tipe_proses = payload.tipeProses;
-  if (payload.reqMethod) updateFields.req_method = payload.reqMethod;
 
   const { data, error } = await supabase
     .from("tweb_mutasi_pengajuan")
-    .update(updateFields)
-    .eq("id", id)
+    .insert(dbPayload)
     .select()
     .single();
 
   if (error) throw error;
 
-  // Catat Log Pengajuan Ulang
+  // Catat Log Pengajuan Ulang sebagai record baru yang menunjuk ke parent lama
   await supabase.from("tweb_mutasi_logs").insert({
     id: crypto.randomUUID(),
-    mutasi_id: id,
+    mutasi_id: mutasiBaruId,
     actor_id: actorId,
     actor_role: actorRole,
     action: "RESUBMIT",
     status_awal: currentMutasi.status,
-    status_baru: "RESUBMITTED",
-    catatan: "Pengaju melakukan revisi data dan mengajukan ulang",
+    status_baru: "PENDING",
+    catatan: "Pengaju melakukan revisi data dan membuat pengajuan baru",
   });
 
   return mapMutasiFromDb(data);

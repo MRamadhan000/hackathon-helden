@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { PendudukRT } from "./TableWarga";
 import SearchableNikSelect from "./SearchableNikSelect";
 
@@ -111,6 +111,17 @@ interface FormMutasiLengkapProps {
   setSelectedNik: (nik: string) => void;
   onSubmitMutasi: (e: React.FormEvent, data: any) => void;
   onClose?: () => void;
+  initialSubAksi?: "baru" | "nonaktif" | "koreksi";
+  initialFormDetail?: {
+    nik?: string;
+    nama?: string;
+    jenisKelamin?: "L" | "P";
+    tempatLahir?: string;
+    tanggalLahir?: string;
+    keterangan?: string;
+  };
+  lockSubAksi?: boolean;
+  resubmitInfo?: string;
 }
 
 export default function FormMutasiLengkap({
@@ -120,21 +131,38 @@ export default function FormMutasiLengkap({
   setSelectedNik,
   onSubmitMutasi,
   onClose,
+  initialSubAksi,
+  initialFormDetail,
+  lockSubAksi = false,
+  resubmitInfo,
 }: FormMutasiLengkapProps) {
   const isTahunBerlalu = tahunPeriode !== "2026";
   const riwayatMutasi = mockRiwayatMutasiPerTahun[tahunPeriode] || [];
 
   const [subAksi, setSubAksi] = useState<"baru" | "nonaktif" | "koreksi">(
-    "baru",
+    initialSubAksi || "baru",
   );
   const [formDetail, setFormDetail] = useState({
-    nik: "",
-    nama: "",
-    jenisKelamin: "L" as "L" | "P",
-    tempatLahir: "Kab. Malang",
-    tanggalLahir: "",
-    keterangan: "Meninggal Dunia",
+    nik: initialFormDetail?.nik || "",
+    nama: initialFormDetail?.nama || "",
+    jenisKelamin: initialFormDetail?.jenisKelamin || ("L" as "L" | "P"),
+    tempatLahir: initialFormDetail?.tempatLahir || "Kab. Malang",
+    tanggalLahir: initialFormDetail?.tanggalLahir || "",
+    keterangan: initialFormDetail?.keterangan || "Meninggal Dunia",
   });
+
+  useEffect(() => {
+    setSubAksi(initialSubAksi || "baru");
+    setFormDetail({
+      nik: initialFormDetail?.nik || "",
+      nama: initialFormDetail?.nama || "",
+      jenisKelamin: initialFormDetail?.jenisKelamin || "L",
+      tempatLahir: initialFormDetail?.tempatLahir || "Kab. Malang",
+      tanggalLahir: initialFormDetail?.tanggalLahir || "",
+      keterangan: initialFormDetail?.keterangan || "Meninggal Dunia",
+    });
+    setSelectedNik(initialFormDetail?.nik || "");
+  }, [initialSubAksi, initialFormDetail, setSelectedNik]);
 
   const handleSelectWargaEksisting = (nik: string) => {
     setSelectedNik(nik);
@@ -152,6 +180,7 @@ export default function FormMutasiLengkap({
   };
 
   const handleChangeSubAksi = (id: "baru" | "nonaktif" | "koreksi") => {
+    if (lockSubAksi) return;
     setSubAksi(id);
     if (id === "baru") {
       setSelectedNik("");
@@ -383,6 +412,11 @@ export default function FormMutasiLengkap({
             <h3 className="text-sm sm:text-base font-bold text-slate-950 leading-snug">
               Formulir Mutasi Kependudukan
             </h3>
+            {resubmitInfo && (
+              <p className="mt-1 text-[11px] text-amber-700 font-semibold">
+                {resubmitInfo}
+              </p>
+            )}
           </div>
 
           {onClose && (
@@ -418,12 +452,13 @@ export default function FormMutasiLengkap({
               <button
                   key={opt.id}
                 type="button"
+                disabled={lockSubAksi}
                 onClick={() => handleChangeSubAksi(opt.id)}
                 className={`px-2 py-2.5 sm:px-3 sm:py-3 rounded-xl border text-center transition flex flex-col items-center justify-center gap-0.5 min-h-16 ${
                   subAksi === opt.id
                     ? "bg-blue-900 text-white border-blue-900 shadow-sm"
                     : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50 active:bg-slate-100"
-                }`}
+                } ${lockSubAksi ? "opacity-70 cursor-not-allowed" : ""}`}
               >
                 <span className="text-[11px] sm:text-xs font-extrabold leading-tight">
                   {opt.title}
