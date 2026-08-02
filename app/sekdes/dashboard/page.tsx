@@ -303,9 +303,11 @@ function SekdesDashboardContent() {
             </p>
             <div className="p-3 bg-rose-50/50 rounded-xl border border-rose-100/80 flex items-center justify-between text-xs font-bold text-rose-950">
               <span>🔔 2 Permohonan Menunggu</span>
-              <span className="text-blue-600 hover:underline cursor-pointer">
-                Buka Berkas →
-              </span>
+              <Link href="/sekdes/berkas-rt">
+                <span className="text-blue-600 hover:underline cursor-pointer">
+                  Buka Berkas →
+                </span>
+              </Link>
             </div>
           </div>
 
@@ -325,9 +327,11 @@ function SekdesDashboardContent() {
             </p>
             <div className="p-3 bg-amber-50/50 rounded-xl border border-amber-200/80 flex items-center justify-between text-xs font-bold text-amber-950">
               <span>🔔 1 Sanggahan Perlu Ditinjau</span>
-              <span className="text-blue-600 hover:underline cursor-pointer">
-                Buka Berkas →
-              </span>
+              <Link href="/sekdes/sanggahan">
+                <span className="text-blue-600 hover:underline cursor-pointer">
+                  Buka Berkas →
+                </span>
+              </Link>
             </div>
           </div>
 
@@ -347,9 +351,11 @@ function SekdesDashboardContent() {
             </p>
             <div className="p-3 bg-emerald-50/50 rounded-xl border border-emerald-200/80 flex items-center justify-between text-xs font-bold text-emerald-950">
               <span>🔔 2 Draft SK Siap Diajukan</span>
-              <span className="text-blue-600 hover:underline cursor-pointer">
-                Buka Berkas →
-              </span>
+              <Link href="/sekdes/rekomendasi-sk">
+                <span className="text-blue-600 hover:underline cursor-pointer">
+                  Buka Berkas →
+                </span>
+              </Link>
             </div>
           </div>
         </div>
