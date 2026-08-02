@@ -7,6 +7,8 @@ export interface PendudukRT {
   nik: string;
   nama: string;
   clusterdesaId: string;
+  keluargaId?: string;
+  agama?: string;
   jenisKelamin: "L" | "P";
   tempatLahir: string;
   tanggalLahir: string;

@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from "react";
 import { PendudukRT } from "./TableWarga";
 import SearchableNikSelect from "./SearchableNikSelect";
+import { Keluarga } from "@/types/keluarga";
+import { ClusterDesa } from "@/types/clusterDesa";
 
 const DAFTAR_KOTA_LAHIR = [
   "Kab. Malang",
@@ -17,6 +19,16 @@ const DAFTAR_KOTA_LAHIR = [
   "Kab. Kediri",
   "Kota Kediri",
   "DKI Jakarta",
+];
+
+const DAFTAR_AGAMA = [
+  "Islam",
+  "Kristen (Protestan)",
+  "Katolik",
+  "Hindu",
+  "Buddha",
+  "Khonghucu",
+  "Kepercayaan / Lainnya",
 ];
 
 const SUB_AKSI_OPTIONS = [
@@ -107,6 +119,8 @@ const mockRiwayatMutasiPerTahun: Record<string, any[]> = {
 interface FormMutasiLengkapProps {
   tahunPeriode: string;
   daftarWarga: PendudukRT[];
+  daftarKeluarga?: Keluarga[];
+  daftarCluster?: ClusterDesa[];
   selectedNik: string;
   setSelectedNik: (nik: string) => void;
   onSubmitMutasi: (e: React.FormEvent, data: any) => void;
@@ -118,6 +132,9 @@ interface FormMutasiLengkapProps {
     jenisKelamin?: "L" | "P";
     tempatLahir?: string;
     tanggalLahir?: string;
+    agama?: string;
+    keluargaId?: string;
+    clusterdesaId?: string;
     keterangan?: string;
   };
   lockSubAksi?: boolean;
@@ -127,6 +144,8 @@ interface FormMutasiLengkapProps {
 export default function FormMutasiLengkap({
   tahunPeriode,
   daftarWarga,
+  daftarKeluarga = [],
+  daftarCluster = [],
   selectedNik,
   setSelectedNik,
   onSubmitMutasi,
@@ -140,7 +159,7 @@ export default function FormMutasiLengkap({
   const riwayatMutasi = mockRiwayatMutasiPerTahun[tahunPeriode] || [];
 
   const [subAksi, setSubAksi] = useState<"baru" | "nonaktif" | "koreksi">(
-    initialSubAksi || "baru",
+    initialSubAksi || "baru"
   );
   const [formDetail, setFormDetail] = useState({
     nik: initialFormDetail?.nik || "",
@@ -148,6 +167,9 @@ export default function FormMutasiLengkap({
     jenisKelamin: initialFormDetail?.jenisKelamin || ("L" as "L" | "P"),
     tempatLahir: initialFormDetail?.tempatLahir || "Kab. Malang",
     tanggalLahir: initialFormDetail?.tanggalLahir || "",
+    agama: initialFormDetail?.agama || "Islam",
+    keluargaId: initialFormDetail?.keluargaId || "",
+    clusterdesaId: initialFormDetail?.clusterdesaId || "",
     keterangan: initialFormDetail?.keterangan || "Meninggal Dunia",
   });
 
@@ -159,6 +181,9 @@ export default function FormMutasiLengkap({
       jenisKelamin: initialFormDetail?.jenisKelamin || "L",
       tempatLahir: initialFormDetail?.tempatLahir || "Kab. Malang",
       tanggalLahir: initialFormDetail?.tanggalLahir || "",
+      agama: initialFormDetail?.agama || "Islam",
+      keluargaId: initialFormDetail?.keluargaId || "",
+      clusterdesaId: initialFormDetail?.clusterdesaId || "",
       keterangan: initialFormDetail?.keterangan || "Meninggal Dunia",
     });
     setSelectedNik(initialFormDetail?.nik || "");
@@ -175,6 +200,9 @@ export default function FormMutasiLengkap({
         jenisKelamin: w.jenisKelamin,
         tempatLahir: w.tempatLahir || "Kab. Malang",
         tanggalLahir: w.tanggalLahir,
+        agama: w.agama || "Islam",
+        keluargaId: w.keluargaId || "",
+        clusterdesaId: w.clusterdesaId || "",
       }));
     }
   };
@@ -190,6 +218,9 @@ export default function FormMutasiLengkap({
         jenisKelamin: "L",
         tempatLahir: "Kab. Malang",
         tanggalLahir: "",
+        agama: "Islam",
+        keluargaId: "",
+        clusterdesaId: "",
         keterangan: "Meninggal Dunia",
       });
     }
@@ -230,6 +261,18 @@ export default function FormMutasiLengkap({
 
     if (!formDetail.tanggalLahir.trim()) {
       return "Tanggal lahir wajib diisi.";
+    }
+
+    if (!formDetail.agama.trim()) {
+      return "Agama wajib dipilih.";
+    }
+
+    if (!formDetail.keluargaId.trim()) {
+      return "Nomor KK wajib dipilih.";
+    }
+
+    if (!formDetail.clusterdesaId.trim()) {
+      return "Tempat / Wilayah (Cluster Desa) wajib dipilih.";
     }
 
     return null;
@@ -450,7 +493,7 @@ export default function FormMutasiLengkap({
           <div className="grid grid-cols-3 gap-2">
             {SUB_AKSI_OPTIONS.map((opt) => (
               <button
-                  key={opt.id}
+                key={opt.id}
                 type="button"
                 disabled={lockSubAksi}
                 onClick={() => handleChangeSubAksi(opt.id)}
@@ -516,6 +559,62 @@ export default function FormMutasiLengkap({
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {thirdFields.map(renderField)}
+                  </div>
+
+                  {/* Field Tambahan: Agama, Nomor KK (Select No KK -> Value ID), Tempat/Wilayah (Select Nama -> Value ID) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                        Agama *
+                      </label>
+                      <select
+                        value={formDetail.agama}
+                        onChange={(e) => handleChangeField("agama", e.target.value)}
+                        className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 bg-white focus:outline-none focus:border-blue-500 cursor-pointer"
+                      >
+                        {DAFTAR_AGAMA.map((ag) => (
+                          <option key={ag} value={ag}>
+                            {ag}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                        Nomor KK *
+                      </label>
+                      <select
+                        value={formDetail.keluargaId}
+                        onChange={(e) => handleChangeField("keluargaId", e.target.value)}
+                        className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 bg-white focus:outline-none focus:border-blue-500 cursor-pointer"
+                      >
+                        <option value="">-- Pilih No. KK --</option>
+                        {daftarKeluarga.map((k) => (
+                          <option key={k.id} value={k.id}>
+                            No. KK: {k.noKk || k.id} {k.alamat ? `(${k.alamat})` : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                        Tempat / Wilayah *
+                      </label>
+                      <select
+                        value={formDetail.clusterdesaId}
+                        onChange={(e) => handleChangeField("clusterdesaId", e.target.value)}
+                        className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 bg-white focus:outline-none focus:border-blue-500 cursor-pointer"
+                      >
+                        <option value="">-- Pilih Tempat / Wilayah --</option>
+                        {daftarCluster.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.nama} {c.jenis ? `(${c.jenis})` : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </>
               )}

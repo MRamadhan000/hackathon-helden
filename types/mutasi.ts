@@ -14,8 +14,8 @@ export interface MutasiPengajuan {
   tanggalLahir: string; // YYYY-MM-DD
   jenisKelamin: string;
   agama: string;
-  keluargaId: string;
-  clusterdesaId: string;
+  keluargaId?: string | null;
+  clusterdesaId?: string | null;
   jenisMutasi: JenisMutasi;
   keterangan?: string | null;
   tipeProses: TipeProses; // 'OFFLINE' (ke RT) atau 'ONLINE' (langsung)
@@ -49,6 +49,8 @@ export interface MutasiSubmitPayload {
   tanggalLahir: string | null;
   jenisKelamin: string | null;
   agama: string | null;
+  keluargaId?: string | null;
+  clusterdesaId?: string | null;
   jenisMutasi: JenisMutasi;
   keterangan: string | null;
   tipeProses: TipeProses;
@@ -71,6 +73,8 @@ export interface MutasiResubmitPayload {
   tanggalLahir?: string;
   jenisKelamin?: string;
   agama?: string;
+  keluargaId?: string;
+  clusterdesaId?: string;
   keterangan?: string;
   tipeProses?: TipeProses;
   reqMethod?: ReqMethod;

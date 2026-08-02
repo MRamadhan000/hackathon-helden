@@ -17,8 +17,8 @@ function mapMutasiFromDb(row: any): MutasiPengajuan {
     tanggalLahir: row.tanggal_lahir,
     jenisKelamin: row.jenis_kelamin,
     agama: row.agama,
-    keluargaId: row.keluarga_id,
-    clusterdesaId: row.clusterdesa_id,
+    keluargaId: row.keluarga_id || null,
+    clusterdesaId: row.clusterdesa_id || null,
     jenisMutasi: row.jenis_mutasi,
     keterangan: row.keterangan,
     tipeProses: row.tipe_proses,
@@ -111,6 +111,8 @@ export async function submitMutasi(
     tanggal_lahir: isDetailMutasi ? payload.tanggalLahir : null,
     jenis_kelamin: isDetailMutasi ? payload.jenisKelamin : null,
     agama: isDetailMutasi ? payload.agama : null,
+    keluarga_id: isDetailMutasi ? payload.keluargaId || null : null,
+    clusterdesa_id: isDetailMutasi ? payload.clusterdesaId || null : null,
     jenis_mutasi: payload.jenisMutasi,
     keterangan: payload.keterangan,
     tipe_proses: payload.tipeProses,
@@ -216,6 +218,8 @@ export async function verifyMutasiSekdes(
           tanggal_lahir: currentMutasi.tanggalLahir,
           jenis_kelamin: currentMutasi.jenisKelamin,
           agama: currentMutasi.agama,
+          keluarga_id: currentMutasi.keluargaId || undefined,
+          clusterdesa_id: currentMutasi.clusterdesaId || undefined,
         })
         .eq("nik", currentMutasi.nik);
     }
@@ -257,7 +261,8 @@ export async function resubmitMutasi(
     tanggal_lahir: payload.tanggalLahir ?? currentMutasi.tanggalLahir ?? null,
     jenis_kelamin: payload.jenisKelamin ?? currentMutasi.jenisKelamin ?? null,
     agama: payload.agama ?? currentMutasi.agama ?? null,
-    clusterdesa_id: currentMutasi.clusterdesaId || null,
+    keluarga_id: payload.keluargaId ?? currentMutasi.keluargaId ?? null,
+    clusterdesa_id: payload.clusterdesaId ?? currentMutasi.clusterdesaId ?? null,
     jenis_mutasi: currentMutasi.jenisMutasi,
     keterangan: payload.keterangan ?? currentMutasi.keterangan ?? null,
     tipe_proses: payload.tipeProses || currentMutasi.tipeProses,

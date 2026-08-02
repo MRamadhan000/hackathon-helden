@@ -1,6 +1,16 @@
 import { createClient } from "@/utils/supabase/client";
 import { Keluarga } from "@/types/keluarga";
 
+function mapKeluargaFromDb(row: any): Keluarga {
+  return {
+    id: row.id,
+    noKk: row.no_kk || row.noKk || "",
+    alamat: row.alamat || "",
+    clusterdesaId: row.clusterdesa_id || row.clusterdesaId || "",
+    createdAt: row.created_at || row.createdAt || "",
+  };
+}
+
 export async function getKeluargaList(): Promise<Keluarga[]> {
   const supabase = createClient();
 
@@ -11,7 +21,7 @@ export async function getKeluargaList(): Promise<Keluarga[]> {
 
   if (error) throw error;
 
-  return data;
+  return (data || []).map(mapKeluargaFromDb);
 }
 
 export async function addKeluarga(payload: Omit<Keluarga, "id" | "createdAt">): Promise<Keluarga> {

@@ -1,6 +1,17 @@
 import { createClient } from "@/utils/supabase/client";
 import { ClusterDesa } from "@/types/clusterDesa";
 
+function mapClusterFromDb(row: any): ClusterDesa {
+  return {
+    id: row.id,
+    nama: row.nama || "",
+    jenis: row.jenis || "",
+    parentId: row.parent_id || row.parentId || null,
+    ketuaWilayah: row.ketua_wilayah || row.ketuaWilayah,
+    koordinat: row.koordinat,
+  };
+}
+
 export async function getClusterDesa(): Promise<ClusterDesa[]> {
   const supabase = createClient();
 
@@ -11,7 +22,7 @@ export async function getClusterDesa(): Promise<ClusterDesa[]> {
 
   if (error) throw error;
 
-  return data;
+  return (data || []).map(mapClusterFromDb);
 }
 
 export async function addClusterDesa(payload: Omit<ClusterDesa, "id">): Promise<ClusterDesa> {

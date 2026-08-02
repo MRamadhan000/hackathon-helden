@@ -7,6 +7,8 @@ import FormMutasiLengkap from "@/components/rt/FormMutasiLengkap";
 import { PendudukRT } from "@/components/rt/TableWarga";
 import { useMutasi } from "@/hooks/cores/useMutasi";
 import { usePenduduk } from "@/hooks/cores/usePenduduk";
+import { useKeluarga } from "@/hooks/cores/useKeluarga";
+import { useClusterDesa } from "@/hooks/cores/useClusterDesa";
 import { useAuth } from "@/hooks/useAuth";
 import type { MutasiResubmitPayload, MutasiSubmitPayload } from "@/types/mutasi";
 
@@ -19,6 +21,9 @@ interface RiwayatMutasiItem {
   tempatLahir?: string;
   tanggalLahir?: string;
   jenisKelamin?: string;
+  agama?: string;
+  keluargaId?: string | null;
+  clusterdesaId?: string | null;
   keterangan: string;
   statusSekdes?: string;
   rawStatus?: string;
@@ -37,6 +42,8 @@ interface MutasiFormData {
   tanggalLahir: string;
   keterangan: string;
   agama?: string;
+  keluargaId?: string;
+  clusterdesaId?: string;
 }
 
 interface MutasiFormSubmitData {
@@ -46,12 +53,14 @@ interface MutasiFormSubmitData {
 
 type JenisMutasiView = "Warga Baru" | "Non-Aktif" | "Koreksi Data";
 
-function mapPendudukToRT(p: PendudukRT): PendudukRT {
+function mapPendudukToRT(p: any): PendudukRT {
   return {
     id: p.id,
     nik: p.nik,
     nama: p.nama,
     clusterdesaId: p.clusterdesaId,
+    keluargaId: p.keluargaId || p.keluarga_id,
+    agama: p.agama,
     jenisKelamin: p.jenisKelamin,
     tempatLahir: p.tempatLahir,
     tanggalLahir: p.tanggalLahir,
@@ -71,6 +80,9 @@ function mapMutasiToRiwayatItem(m: any): RiwayatMutasiItem {
     tempatLahir: m.tempatLahir,
     tanggalLahir: m.tanggalLahir,
     jenisKelamin: m.jenisKelamin,
+    agama: m.agama,
+    keluargaId: m.keluargaId,
+    clusterdesaId: m.clusterdesaId,
     keterangan: m.keterangan || `(Metode Pengajuan: ${m.reqMethod || m.tipeProses})`,
     statusSekdes:
       m.status === "APPROVED"
@@ -119,6 +131,20 @@ function MutasiContent() {
   const { user: currentUser, isLoading: isAuthLoading } = useAuth();
   const { data: realMutasiList, isLoading: isLoadingMutasi, submit: submitMutasiHook, resubmit: resubmitMutasiHook } = useMutasi(tahunPeriode, currentUser?.id ?? null);
   const { data: realPendudukList } = usePenduduk();
+  const { data: realKeluargaList } = useKeluarga();
+  const { data: realClusterList } = useClusterDesa();
+
+  const getNoKkText = (keluargaId?: string | null) => {
+    if (!keluargaId) return "-";
+    const match = (realKeluargaList || []).find((k) => k.id === keluargaId);
+    return match ? `${match.noKk} (${match.alamat})` : keluargaId;
+  };
+
+  const getClusterText = (clusterId?: string | null) => {
+    if (!clusterId) return "-";
+    const match = (realClusterList || []).find((c) => c.id === clusterId);
+    return match ? `${match.nama} ${match.jenis ? `(${match.jenis})` : ""}` : clusterId;
+  };
 
   // Map Real Data Warga ke Format PendudukRT
   const daftarWarga: PendudukRT[] = useMemo(() => {
@@ -348,7 +374,9 @@ function MutasiContent() {
         tempatLahir: isNonAktif ? null : (tempatLahir || wargaReferensi?.tempatLahir || null),
         tanggalLahir: isNonAktif ? null : (tanggalLahir || wargaReferensi?.tanggalLahir || null),
         jenisKelamin: isNonAktif ? null : (jenisKelamin || wargaReferensi?.jenisKelamin || null),
-        agama: isNonAktif ? null : (formData.agama || "Islam"),
+        agama: isNonAktif ? null : (formData.agama || wargaReferensi?.agama || "Islam"),
+        keluargaId: isNonAktif ? null : (formData.keluargaId || wargaReferensi?.keluargaId || null),
+        clusterdesaId: isNonAktif ? null : (formData.clusterdesaId || wargaReferensi?.clusterdesaId || null),
         jenisMutasi: jenisMutasi as any,
         keterangan: keterangan || null,
         tipeProses: "OFFLINE",
@@ -365,6 +393,8 @@ function MutasiContent() {
           tanggalLahir: payload.tanggalLahir || undefined,
           jenisKelamin: payload.jenisKelamin || undefined,
           agama: payload.agama || undefined,
+          keluargaId: payload.keluargaId || undefined,
+          clusterdesaId: payload.clusterdesaId || undefined,
           keterangan: payload.keterangan || undefined,
           tipeProses: payload.tipeProses,
           reqMethod: payload.reqMethod,
@@ -575,6 +605,8 @@ function MutasiContent() {
         <FormMutasiLengkap
           tahunPeriode={tahunPeriode}
           daftarWarga={daftarWarga}
+          daftarKeluarga={realKeluargaList}
+          daftarCluster={realClusterList}
           selectedNik={selectedNik}
           setSelectedNik={setSelectedNik}
           onSubmitMutasi={handleMutasiSubmit}
@@ -586,6 +618,9 @@ function MutasiContent() {
             jenisKelamin: (resubmitSource.jenisKelamin === "P" ? "P" : "L") as "L" | "P",
             tempatLahir: resubmitSource.tempatLahir || "Kab. Malang",
             tanggalLahir: resubmitSource.tanggalLahir || "",
+            agama: resubmitSource.agama || "Islam",
+            keluargaId: resubmitSource.keluargaId || "",
+            clusterdesaId: resubmitSource.clusterdesaId || "",
             keterangan: resubmitSource.keterangan || "",
           } : undefined}
           lockSubAksi={!!resubmitSource}
@@ -699,6 +734,33 @@ function MutasiContent() {
                       <span className="font-semibold text-slate-800">
                         {selectedDetailItem.tempatLahir || "Kab. Malang"},{" "}
                         {selectedDetailItem.tanggalLahir || "-"}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold uppercase block">
+                        Agama
+                      </span>
+                      <span className="font-semibold text-slate-800">
+                        {selectedDetailItem.agama || "-"}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold uppercase block">
+                        Nomor KK (Kelompok Keluarga)
+                      </span>
+                      <span className="font-mono font-semibold text-slate-900">
+                        {getNoKkText(selectedDetailItem.keluargaId)}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold uppercase block">
+                        Tempat / Wilayah (Cluster Desa)
+                      </span>
+                      <span className="font-semibold text-slate-800">
+                        {getClusterText(selectedDetailItem.clusterdesaId)}
                       </span>
                     </div>
                   </div>
