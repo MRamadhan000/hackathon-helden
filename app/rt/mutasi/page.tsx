@@ -178,7 +178,6 @@ function MutasiContent() {
 
     const isWargaBaru = jenis === "Warga Baru";
     const isNonAktif = jenis === "Non-Aktif";
-    const showKeterangan = isNonAktif;
 
     return (
       <section className="rounded-2xl border border-slate-200/80 overflow-hidden bg-white shadow-sm">
@@ -200,7 +199,7 @@ function MutasiContent() {
                 <th className="px-5 py-3">Warga Terkait</th>
                 {isWargaBaru && <th className="px-5 py-3">TTL & JK</th>}
                 {jenis === "Koreksi Data" && <th className="px-5 py-3">Data Koreksi</th>}
-                {showKeterangan && <th className="px-5 py-3">Keterangan</th>}
+                <th className="px-5 py-3">Keterangan</th>
                 <th className="px-5 py-3 text-right">Status Sekdes</th>
                 <th className="px-5 py-3 text-right">Aksi</th>
               </tr>
@@ -233,7 +232,7 @@ function MutasiContent() {
                       </p>
                     </td>
                   )}
-                  {showKeterangan && <td className="px-5 py-3.5 text-xs text-slate-600">{item.keterangan}</td>}
+                  <td className="px-5 py-3.5 text-xs text-slate-600">{item.keterangan}</td>
                   <td className="px-5 py-3.5 text-right">{renderStatusBadge(item)}</td>
                   <td className="px-5 py-3.5 text-right">
                     <button
@@ -473,9 +472,7 @@ function MutasiContent() {
                                   </p>
                                 )}
 
-                                {jenis === "Non-Aktif" && (
-                                  <p className="text-xs text-slate-600 leading-relaxed">{item.keterangan}</p>
-                                )}
+                                <p className="text-xs text-slate-600 leading-relaxed">{item.keterangan}</p>
 
                                 <div className="pt-1">
                                   <button

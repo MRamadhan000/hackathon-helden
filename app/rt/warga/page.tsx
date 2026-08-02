@@ -19,6 +19,7 @@ function WargaContent() {
       id: p.id,
       nik: p.nik,
       nama: p.nama,
+      clusterdesaId: p.clusterdesaId,
       jenisKelamin: (p.jenisKelamin === "P" ? "P" : "L") as "L" | "P",
       tempatLahir: p.tempat_lahir,
       tanggalLahir: p.tanggal_lahir,
