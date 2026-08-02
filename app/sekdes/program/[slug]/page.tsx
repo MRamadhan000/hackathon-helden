@@ -167,7 +167,7 @@ function TambahPenerimaModal({
                   <>
                     <input value={pendudukSearch} onChange={(e) => setPendudukSearch(e.target.value)}
                       placeholder="Cari nama atau NIK penduduk..."
-                      className="w-full bg-slate-50 border border-slate-200 text-xs py-2 px-3 rounded-xl focus:outline-none focus:border-indigo-400 mb-1.5" />
+                      className="w-full text-black bg-slate-50 border border-slate-200 text-xs py-2 px-3 rounded-xl focus:outline-none focus:border-indigo-400 mb-1.5" />
                     {filteredPenduduk.length > 0 && (
                       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-inner max-h-36 overflow-y-auto divide-y divide-slate-100">
                         {filteredPenduduk.map((p) => (
@@ -200,7 +200,7 @@ function TambahPenerimaModal({
                   <>
                     <input value={areaSearch} onChange={(e) => setAreaSearch(e.target.value)}
                       placeholder="Cari wilayah / RT / RW..."
-                      className="w-full bg-slate-50 border border-slate-200 text-xs py-2 px-3 rounded-xl focus:outline-none focus:border-indigo-400 mb-1.5" />
+                      className="w-full text-black bg-slate-50 border border-slate-200 text-xs py-2 px-3 rounded-xl focus:outline-none focus:border-indigo-400 mb-1.5" />
                     {filteredArea.length > 0 && (
                       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-inner max-h-36 overflow-y-auto divide-y divide-slate-100">
                         {filteredArea.map((a) => (
@@ -221,7 +221,7 @@ function TambahPenerimaModal({
                 <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Nominal (Bantuan/Lainnya) *</label>
                 <input type="number" min="0" step="1000" value={nominal} onChange={(e) => setNominal(e.target.value)} required
                   placeholder="mis: 300000"
-                  className="w-full bg-slate-50 border border-slate-200 text-xs font-semibold py-2 px-3 rounded-xl focus:outline-none focus:border-indigo-400" />
+                  className="w-full text-black bg-slate-50 border border-slate-200 text-xs font-semibold py-2 px-3 rounded-xl focus:outline-none focus:border-indigo-400" />
               </div>
 
               {/* Catatan */}
@@ -229,7 +229,7 @@ function TambahPenerimaModal({
                 <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Catatan</label>
                 <textarea value={catatan} onChange={(e) => setCatatan(e.target.value)} rows={2}
                   placeholder="Keterangan opsional..."
-                  className="w-full bg-slate-50 border border-slate-200 text-xs py-2 px-3 rounded-xl focus:outline-none focus:border-indigo-400 resize-none" />
+                  className="w-full text-black bg-slate-50 border border-slate-200 text-xs py-2 px-3 rounded-xl focus:outline-none focus:border-indigo-400 resize-none" />
               </div>
 
               <div className="flex gap-2 pt-1 border-t border-slate-100 flex-shrink-0">
