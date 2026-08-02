@@ -1,224 +1,160 @@
 "use client";
 
-import React, { useState, useMemo, useEffect, Suspense } from "react";
+import React, { useEffect, useMemo, useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useMutasi } from "@/hooks/cores/useMutasi";
 import type { MutasiPengajuan } from "@/types/mutasi";
 
-interface DetailWargaLengkap {
-  nik: string;
-  nama: string;
-  tempatLahir: string;
-  tanggalLahir: string;
-  jenisKelamin: "Laki-Laki" | "Perempuan";
-  agama: string;
-  statusPerkawinan: string;
-  pekerjaan: string;
-  alamatAsal?: string;
-  statusDukcapil?: string;
+const STATUS_FILTER_OPTIONS = ["Semua", "PENDING", "APPROVED", "REJECTED", "RESUBMITTED"] as const;
+
+type StatusFilter = (typeof STATUS_FILTER_OPTIONS)[number];
+
+function formatTanggal(value?: string | null) {
+  if (!value) return "-";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 }
 
-interface AuditPengajuRT {
-  namaKetuaRT: string;
-  wilayahRT: string;
-  tanggalKirim: string;
-  jamKirim: string;
+function getStatusMeta(status?: string) {
+  switch (status) {
+    case "APPROVED":
+      return {
+        label: "APPROVED",
+        badge: "bg-emerald-100 text-emerald-800 border-emerald-200",
+      } as const;
+    case "REJECTED":
+      return {
+        label: "REJECTED",
+        badge: "bg-rose-100 text-rose-800 border-rose-200",
+      } as const;
+    case "RESUBMITTED":
+      return {
+        label: "RESUBMITTED",
+        badge: "bg-blue-100 text-blue-800 border-blue-200",
+      } as const;
+    default:
+      return {
+        label: "PENDING",
+        badge: "bg-amber-100 text-amber-800 border-amber-200",
+      } as const;
+  }
 }
 
-interface BerkasMutasiRT {
-  id: string;
-  tanggalLapor: string;
-  rt: string;
-  jenisPengajuan:
-    | "1. Warga Baru"
-    | "2. Non-Aktif (Pindah/Meninggal)"
-    | "3. Koreksi Data NIK/KK";
-  keterangan: string;
-  status: "Menunggu Validasi" | "Disetujui" | "Ditolak";
-  biodata: DetailWargaLengkap;
-  pengaju: AuditPengajuRT;
-  catatanSekdes?: string;
-}
-
-const mockBerkasMasukRT: Record<string, BerkasMutasiRT[]> = {
-  "2026": [
-    {
-      id: "b-2026-01",
-      tanggalLapor: "18/03/2026",
-      rt: "RT 03 / RW 01",
-      jenisPengajuan: "1. Warga Baru",
-      keterangan:
-        "Pendaftaran Pindah Masuk RT dari Luar Desa (Kartu Keluarga Baru)",
-      status: "Menunggu Validasi",
-      biodata: {
-        nik: "3507011112220004",
-        nama: "Andi Pratama",
-        tempatLahir: "Kota Malang",
-        tanggalLahir: "18 Juni 1994",
-        jenisKelamin: "Laki-Laki",
-        agama: "Islam",
-        statusPerkawinan: "Menikah",
-        pekerjaan: "Karyawan Swasta",
-        alamatAsal: "Jl. Mawar No. 12, Kec. Sukun, Kota Malang",
-        statusDukcapil: "Terverifikasi Aktif",
-      },
-      pengaju: {
-        namaKetuaRT: "Bpk. Bambang Sukoco",
-        wilayahRT: "RT 03 / RW 01",
-        tanggalKirim: "18 Maret 2026",
-        jamKirim: "09:42 WIB",
-      },
-    },
-    {
-      id: "b-2026-02",
-      tanggalLapor: "15/03/2026",
-      rt: "RT 01 / RW 01",
-      jenisPengajuan: "3. Koreksi Data NIK/KK",
-      keterangan:
-        "Koreksi ejaan nama tempat lahir di KK sesuai ijazah & Dukcapil",
-      status: "Menunggu Validasi",
-      biodata: {
-        nik: "3507011234560001",
-        nama: "Budi Santoso",
-        tempatLahir: "Kab. Malang",
-        tanggalLahir: "12 Mei 1985",
-        jenisKelamin: "Laki-Laki",
-        agama: "Islam",
-        statusPerkawinan: "Menikah",
-        pekerjaan: "Wiraswasta / Pedagang",
-        alamatAsal: "RT 01 / RW 01 Dusun Krajan",
-        statusDukcapil: "Terverifikasi Aktif",
-      },
-      pengaju: {
-        namaKetuaRT: "Bpk. Heri Setiawan",
-        wilayahRT: "RT 01 / RW 01",
-        tanggalKirim: "15 Maret 2026",
-        jamKirim: "14:15 WIB",
-      },
-    },
-    {
-      id: "b-2026-03",
-      tanggalLapor: "10/02/2026",
-      rt: "RT 02 / RW 01",
-      jenisPengajuan: "2. Non-Aktif (Pindah/Meninggal)",
-      keterangan:
-        "Laporan Kematian Warga (Surat Keterangan Kematian Terlampir)",
-      status: "Disetujui",
-      biodata: {
-        nik: "3507015554440003",
-        nama: "Joko Widodo (Alm)",
-        tempatLahir: "Kab. Blitar",
-        tanggalLahir: "15 Januari 1945",
-        jenisKelamin: "Laki-Laki",
-        agama: "Islam",
-        statusPerkawinan: "Duda / Ditinggal Mati",
-        pekerjaan: "Pensiunan",
-        alamatAsal: "RT 02 / RW 01 Dusun Krajan",
-        statusDukcapil: "Anomali / Perlu Non-Aktif",
-      },
-      pengaju: {
-        namaKetuaRT: "Bpk. Agus Rahardjo",
-        wilayahRT: "RT 02 / RW 01",
-        tanggalKirim: "10 Februari 2026",
-        jamKirim: "11:05 WIB",
-      },
-      catatanSekdes:
-        "Berkas kematian lengkap, status kependudukan dinonaktifkan.",
-    },
-  ],
-  "2025": [
-    {
-      id: "b-2025-01",
-      tanggalLapor: "12/11/2025",
-      rt: "RT 03 / RW 01",
-      jenisPengajuan: "1. Warga Baru",
-      keterangan: "Pindahan antar RT internal desa",
-      status: "Disetujui",
-      biodata: {
-        nik: "3507019876540002",
-        nama: "Siti Aminah",
-        tempatLahir: "Kota Surabaya",
-        tanggalLahir: "24 Agustus 1958",
-        jenisKelamin: "Perempuan",
-        agama: "Islam",
-        statusPerkawinan: "Janda",
-        pekerjaan: "Mengurus Rumah Tangga",
-        alamatAsal: "RT 04 / RW 01",
-        statusDukcapil: "Terverifikasi Aktif",
-      },
-      pengaju: {
-        namaKetuaRT: "Bpk. Bambang Sukoco",
-        wilayahRT: "RT 03 / RW 01",
-        tanggalKirim: "12 November 2025",
-        jamKirim: "08:30 WIB",
-      },
-    },
-  ],
-};
-
-function ValidasiBerkasRTContent() {
+function HalamanValidasiBerkasRT() {
   const searchParams = useSearchParams();
   const tahunPeriode = searchParams.get("tahun") || "2026";
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterStatus, setFilterStatus] = useState<string>("Semua");
-  const [selectedDetail, setSelectedDetail] = useState<BerkasMutasiRT | null>(
-    null,
-  );
+  const { user: currentUser } = useAuth();
+  const {
+    data: daftarMutasi,
+    isLoading,
+    error,
+    verifySekdes,
+  } = useMutasi(tahunPeriode);
 
-  const [dataList, setDataList] = useState<BerkasMutasiRT[]>(
-    () => mockBerkasMasukRT[tahunPeriode] || mockBerkasMasukRT["2026"],
-  );
+  const [filterStatus, setFilterStatus] = useState<StatusFilter>("Semua");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedMutasiId, setSelectedMutasiId] = useState<string | null>(null);
+  const [feedbackDraft, setFeedbackDraft] = useState("");
+  const [notif, setNotif] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
 
-  // Sync state dataList jika query parameter tahun berubah
+  const selectedItem = useMemo(() => {
+    return daftarMutasi.find((item) => item.id === selectedMutasiId) || null;
+  }, [daftarMutasi, selectedMutasiId]);
+
   useEffect(() => {
-    setDataList(mockBerkasMasukRT[tahunPeriode] || mockBerkasMasukRT["2026"]);
-  }, [tahunPeriode]);
+    setFeedbackDraft(selectedItem?.feedbackSekdes || "");
+  }, [selectedItem?.id, selectedItem?.feedbackSekdes]);
 
-  // Monitoring Counter Statistik (Aman dari undefined)
-  const stats = useMemo(() => {
-    const total = dataList.length;
-    const pending = dataList.filter(
-      (i) => i.status === "Menunggu Validasi",
-    ).length;
-    const approved = dataList.filter((i) => i.status === "Disetujui").length;
-    const rejected = dataList.filter((i) => i.status === "Ditolak").length;
-    return { total, pending, approved, rejected };
-  }, [dataList]);
-
-  // Filter Data dengan Optional Chaining
   const filteredData = useMemo(() => {
-    return dataList.filter((item) => {
-      const q = searchQuery.toLowerCase().trim();
-      const namaWarga = item.biodata?.nama?.toLowerCase() || "";
-      const nikWarga = item.biodata?.nik || "";
-      const rtAsal = item.rt?.toLowerCase() || "";
-      const ketRT = item.pengaju?.namaKetuaRT?.toLowerCase() || "";
-      const alasanKet = item.keterangan?.toLowerCase() || "";
+    const term = searchTerm.toLowerCase().trim();
+
+    return daftarMutasi.filter((item) => {
+      const matchStatus =
+        filterStatus === "Semua" || (item.status || "PENDING") === filterStatus;
 
       const matchSearch =
-        !q ||
-        namaWarga.includes(q) ||
-        nikWarga.includes(q) ||
-        rtAsal.includes(q) ||
-        ketRT.includes(q) ||
-        alasanKet.includes(q);
+        !term ||
+        item.nama?.toLowerCase().includes(term) ||
+        item.nik?.toLowerCase().includes(term) ||
+        item.jenisMutasi?.toLowerCase().includes(term) ||
+        item.keterangan?.toLowerCase().includes(term) ||
+        item.feedbackSekdes?.toLowerCase().includes(term) ||
+        item.parent?.toLowerCase().includes(term);
 
-      const matchFilter =
-        filterStatus === "Semua" || item.status === filterStatus;
-
-      return matchSearch && matchFilter;
+      return matchStatus && matchSearch;
     });
-  }, [dataList, searchQuery, filterStatus]);
+  }, [daftarMutasi, filterStatus, searchTerm]);
 
-  // Handler Verifikasi Sekdes
-  const handleAksiVerifikasi = (id: string, aksi: "Disetujui" | "Ditolak") => {
-    setDataList((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, status: aksi } : item)),
-    );
-    setSelectedDetail(null);
+  const pendingCount = useMemo(() => {
+    return daftarMutasi.filter(
+      (item) => item.status === "PENDING" || item.status === "RESUBMITTED"
+    ).length;
+  }, [daftarMutasi]);
+
+  const approveItem = async (item: MutasiPengajuan) => {
+    if (!currentUser?.id) {
+      setNotif({
+        type: "error",
+        message: "Session Sekdes tidak ditemukan. Silakan login ulang.",
+      });
+      return;
+    }
+
+    try {
+      await verifySekdes(item.id, true, undefined, currentUser.id);
+      setNotif({
+        type: "success",
+        message: `Pengajuan ${item.nama || item.nik} berhasil disetujui.`,
+      });
+    } catch (err) {
+      setNotif({
+        type: "error",
+        message: (err as Error).message || "Gagal menyetujui pengajuan.",
+      });
+    }
+  };
+
+  const rejectItem = async (item: MutasiPengajuan) => {
+    if (!currentUser?.id) {
+      setNotif({
+        type: "error",
+        message: "Session Sekdes tidak ditemukan. Silakan login ulang.",
+      });
+      return;
+    }
+
+    const feedback = feedbackDraft.trim();
+    if (!feedback) {
+      setNotif({
+        type: "error",
+        message: "Feedback wajib diisi sebelum menolak pengajuan.",
+      });
+      return;
+    }
+
+    try {
+      await verifySekdes(item.id, false, feedback, currentUser.id);
+      setNotif({
+        type: "success",
+        message: `Pengajuan ${item.nama || item.nik} ditolak dengan feedback tersimpan.`,
+      });
+    } catch (err) {
+      setNotif({
+        type: "error",
+        message: (err as Error).message || "Gagal menolak pengajuan.",
+      });
+    }
   };
 
   const canReview =
@@ -226,381 +162,422 @@ function ValidasiBerkasRTContent() {
     (selectedItem.status === "PENDING" || selectedItem.status === "RESUBMITTED");
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-10 font-sans antialiased">
-      <div className="max-w-6xl mx-auto space-y-6">
-        {/* HEADER & NAVIGASI */}
+    <div className="min-h-screen bg-slate-50 p-6 lg:p-12 space-y-6 font-sans antialiased">
+      <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <Link
             href={`/sekdes/dashboard?tahun=${tahunPeriode}`}
-            className="inline-flex items-center gap-2 text-xs font-bold text-slate-700 hover:text-indigo-600 bg-white px-3.5 py-2 rounded-xl border border-slate-200 shadow-2xs transition self-start"
+            className="inline-flex items-center gap-2 text-xs font-bold text-slate-700 hover:text-indigo-600 bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm transition self-start"
           >
-            ← Kembali ke Panel Sekdes
+            ← Kembali ke Workspace Sekdes
           </Link>
-          <span className="text-xs font-bold text-slate-600 bg-white px-3 py-1.5 rounded-xl border border-slate-200 self-start sm:self-auto">
-            📅 Periode Anggaran:{" "}
-            <strong className="text-slate-900">{tahunPeriode}</strong>
+          <span className="text-xs font-bold text-slate-600 bg-white px-3 py-1.5 rounded-xl border border-slate-200">
+            📅 Periode: <strong className="text-slate-900">{tahunPeriode}</strong>
           </span>
         </div>
 
-        {/* STATS MONITORING DATA BERKAS & MUTASI RT */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-2xs">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-              Total Pengajuan RT
-            </span>
-            <div className="text-2xl font-black text-slate-900 mt-1">
-              {stats.total}{" "}
-              <span className="text-xs font-normal text-slate-400">Berkas</span>
-            </div>
+        {notif && (
+          <div
+            className={`p-4 rounded-xl text-xs font-bold shadow-sm border ${
+              notif.type === "success"
+                ? "bg-emerald-50 border-emerald-200 text-emerald-950"
+                : "bg-rose-50 border-rose-200 text-rose-950"
+            }`}
+          >
+            {notif.message}
           </div>
+        )}
 
-          <div className="bg-amber-50/80 p-4.5 rounded-2xl border border-amber-200/80 shadow-2xs">
-            <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wider block">
-              ⏳ Menunggu Validasi
-            </span>
-            <div className="text-2xl font-black text-amber-950 mt-1">
-              {stats.pending}{" "}
-              <span className="text-xs font-normal text-amber-800">
-                Perlu Aksi
-              </span>
-            </div>
+        {error && (
+          <div className="p-4 rounded-xl text-xs font-bold shadow-sm border bg-rose-50 border-rose-200 text-rose-950">
+            Gagal memuat data mutasi: {error.message}
           </div>
+        )}
 
-          <div className="bg-emerald-50/80 p-4.5 rounded-2xl border border-emerald-200/80 shadow-2xs">
-            <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block">
-              ✓ Disetujui Sekdes
-            </span>
-            <div className="text-2xl font-black text-emerald-950 mt-1">
-              {stats.approved}{" "}
-              <span className="text-xs font-normal text-emerald-800">
-                Selesai
-              </span>
-            </div>
-          </div>
-
-          <div className="bg-rose-50/80 p-4.5 rounded-2xl border border-rose-200/80 shadow-2xs">
-            <span className="text-[10px] font-bold text-rose-800 uppercase tracking-wider block">
-              ✕ Ditolak Sekdes
-            </span>
-            <div className="text-2xl font-black text-rose-950 mt-1">
-              {stats.rejected}{" "}
-              <span className="text-xs font-normal text-rose-800">Berkas</span>
-            </div>
-          </div>
-        </div>
-
-        {/* KARTU UTAMA TABEL VALIDASI */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden space-y-0">
-          {/* Header Card */}
-          <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h2 className="text-base font-bold text-slate-950">
-                Validasi Berkas & Mutasi Penduduk RT
+        <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-6">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-50 text-indigo-800 rounded-full text-xs font-bold mb-1">
+                📋 Antrean Verifikasi Sekdes
+              </div>
+              <h2 className="text-lg font-bold text-slate-950">
+                Pemeriksaan Pengajuan Mutasi RT ({tahunPeriode})
               </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Verifikasi data pendaftaran warga baru, mutasi domisili, dan
-                koreksi NIK dari pengurus RT.
+              <p className="text-xs text-slate-500 max-w-2xl">
+                Data diambil langsung dari tweb_mutasi_pengajuan untuk periode tahun ini.
+                Approve akan mengisi approved_by dari akun Sekdes login, dan reject wajib disimpan dengan feedback.
               </p>
             </div>
-          </div>
 
-          {/* Search + Filter Tab Status */}
-          <div className="p-4 bg-slate-50/80 border-b border-slate-100 flex flex-col sm:flex-row gap-3 justify-between">
-            <input
-              type="text"
-              placeholder="Cari nama warga, NIK, asal RT, atau nama ketua RT..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="px-3.5 py-2 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 bg-white focus:outline-none focus:border-indigo-600 sm:w-80"
-            />
-
-            {/* Filter Tab Status */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-              {["Semua", "Menunggu Validasi", "Disetujui", "Ditolak"].map(
-                (st) => (
-                  <button
-                    key={st}
-                    onClick={() => setFilterStatus(st)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer ${
-                      filterStatus === st
-                        ? "bg-slate-900 text-white shadow-2xs"
-                        : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
-                    }`}
-                  >
-                    {st}
-                  </button>
-                ),
-              )}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full lg:w-auto">
+              <div className="px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200/70">
+                <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Total Pengajuan
+                </span>
+                <span className="text-base font-black text-slate-950">{daftarMutasi.length}</span>
+              </div>
+              <div className="px-4 py-3 rounded-2xl bg-amber-50 border border-amber-200/70">
+                <span className="block text-[10px] font-bold uppercase tracking-wider text-amber-700">
+                  Menunggu Review
+                </span>
+                <span className="text-base font-black text-amber-950">{pendingCount}</span>
+              </div>
+              <div className="px-4 py-3 rounded-2xl bg-indigo-50 border border-indigo-200/70">
+                <span className="block text-[10px] font-bold uppercase tracking-wider text-indigo-700">
+                  Login Sekdes
+                </span>
+                <span className="text-xs font-black text-indigo-950 break-all">
+                  {currentUser?.nama || currentUser?.id || "Belum login"}
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* TABEL DATA PENDATAAN & MUTASI */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
-                  <th className="px-5 py-3">Asal RT & Waktu Lapor</th>
-                  <th className="px-5 py-3">Jenis Pengajuan</th>
-                  <th className="px-5 py-3">Identitas Warga</th>
-                  <th className="px-5 py-3">Pengaju (Ketua RT)</th>
-                  <th className="px-5 py-3 text-center">Status Verifikasi</th>
-                  <th className="px-5 py-3 text-right">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
-                {filteredData.length > 0 ? (
-                  filteredData.map((item) => (
-                    <tr
-                      key={item.id}
-                      className="hover:bg-slate-50/70 transition"
-                    >
-                      <td className="px-5 py-3.5 whitespace-nowrap">
-                        <p className="font-bold text-slate-900">{item.rt}</p>
-                        <p className="font-mono text-[10px] text-slate-400 mt-0.5">
-                          {item.pengaju?.tanggalKirim || item.tanggalLapor}{" "}
-                          {item.pengaju?.jamKirim
-                            ? `(${item.pengaju.jamKirim})`
-                            : ""}
-                        </p>
-                      </td>
-                      <td className="px-5 py-3.5 whitespace-nowrap">
-                        <span className="px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-900 font-bold border border-indigo-100 text-[11px]">
-                          {item.jenisPengajuan}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <p className="font-bold text-slate-900">
-                          {item.biodata?.nama || "-"}
-                        </p>
-                        <p className="font-mono text-[11px] text-slate-400">
-                          NIK: {item.biodata?.nik || "-"}
-                        </p>
-                      </td>
-                      <td className="px-5 py-3.5 whitespace-nowrap">
-                        <p className="font-bold text-slate-800">
-                          {item.pengaju?.namaKetuaRT || "Pengurus RT"}
-                        </p>
-                        <p className="text-[10px] text-slate-400">
-                          {item.pengaju?.wilayahRT || item.rt}
-                        </p>
-                      </td>
-                      <td className="px-5 py-3.5 text-center whitespace-nowrap">
-                        {item.status === "Menunggu Validasi" && (
-                          <span className="px-2.5 py-1 rounded-full bg-amber-50 text-amber-900 border border-amber-200 font-bold text-[10px]">
-                            ⏳ Menunggu Validasi
-                          </span>
-                        )}
-                        {item.status === "Disetujui" && (
-                          <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-900 border border-emerald-200 font-bold text-[10px]">
-                            ✓ Disetujui
-                          </span>
-                        )}
-                        {item.status === "Ditolak" && (
-                          <span className="px-2.5 py-1 rounded-full bg-rose-50 text-rose-900 border border-rose-200 font-bold text-[10px]">
-                            ✕ Ditolak
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-5 py-3.5 text-right whitespace-nowrap">
-                        <button
-                          onClick={() => setSelectedDetail(item)}
-                          className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-900 font-bold rounded-lg border border-indigo-100 transition cursor-pointer"
-                        >
-                          Tinjau Berkas
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="p-8 text-center text-slate-400 text-xs"
-                    >
-                      Tidak ada berkas mutasi/perbaikan data yang sesuai filter.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+            <div className="relative flex-1 max-w-xl">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400 text-xs">
+                🔍
+              </span>
+              <input
+                type="text"
+                placeholder="Cari nama, NIK, jenis mutasi, catatan, atau parent..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-indigo-600 focus:bg-white transition"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <label className="text-xs font-bold text-slate-500">
+                Filter Status:
+              </label>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value as StatusFilter)}
+                className="bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 py-2 px-3 rounded-xl focus:outline-none focus:border-indigo-600 cursor-pointer"
+              >
+                {STATUS_FILTER_OPTIONS.map((status) => (
+                  <option key={status} value={status}>
+                    {status === "Semua" ? "Semua Status" : status}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          <div className="px-5 py-3 bg-slate-50/50 border-t border-slate-100 text-[11px] text-slate-500 font-medium">
-            Menampilkan {filteredData.length} dari {dataList.length} berkas
-            pengajuan RT
-          </div>
+          {isLoading ? (
+            <div className="p-10 text-center text-xs text-slate-400">
+              Memuat data pengajuan mutasi dari Supabase...
+            </div>
+          ) : filteredData.length > 0 ? (
+            <div className="overflow-x-auto rounded-xl border border-slate-100">
+              <table className="w-full text-left text-sm border-collapse min-w-240">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200/80 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                    <th className="px-5 py-3.5">Waktu Lapor</th>
+                    <th className="px-5 py-3.5">Warga / NIK</th>
+                    <th className="px-5 py-3.5">Jenis Mutasi</th>
+                    <th className="px-5 py-3.5">Catatan / Detail</th>
+                    <th className="px-5 py-3.5">Tracking</th>
+                    <th className="px-5 py-3.5 text-right">Status</th>
+                    <th className="px-5 py-3.5 text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
+                  {filteredData.map((item) => {
+                    const statusMeta = getStatusMeta(item.status);
+                    const isReviewable =
+                      item.status === "PENDING" || item.status === "RESUBMITTED";
+
+                    return (
+                      <tr
+                        key={item.id}
+                        className="hover:bg-slate-50/60 transition cursor-pointer"
+                        onClick={() => setSelectedMutasiId(item.id)}
+                      >
+                        <td className="px-5 py-4 text-xs font-mono text-slate-500 whitespace-nowrap">
+                          {formatTanggal(item.createdAt)}
+                        </td>
+                        <td className="px-5 py-4">
+                          <p className="font-bold text-slate-950 text-xs">
+                            {item.nama || "-"}
+                          </p>
+                          <p className="font-mono text-[11px] text-slate-400">
+                            NIK: {item.nik || "-"}
+                          </p>
+                        </td>
+                        <td className="px-5 py-4">
+                          <span className="px-2.5 py-1 bg-indigo-50 text-indigo-800 text-xs font-bold rounded-lg border border-indigo-100 whitespace-nowrap">
+                            {item.jenisMutasi}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4 text-xs text-slate-600 max-w-xs">
+                          <p className="leading-relaxed">
+                            {item.keterangan || "-"}
+                          </p>
+                          {item.feedbackSekdes && (
+                            <p className="mt-1 text-[11px] text-rose-700 font-medium">
+                              Feedback: {item.feedbackSekdes}
+                            </p>
+                          )}
+                        </td>
+                        <td className="px-5 py-4 text-xs text-slate-600">
+                          {item.parent ? (
+                            <span className="inline-flex px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 border border-slate-200 font-mono text-[10px] break-all">
+                              Parent: {item.parent.slice(0, 8)}...
+                            </span>
+                          ) : (
+                            <span className="text-slate-400">-</span>
+                          )}
+                        </td>
+                        <td className="px-5 py-4 text-right">
+                          <span
+                            className={`px-2.5 py-1 rounded-lg border text-xs font-bold whitespace-nowrap ${statusMeta.badge}`}
+                          >
+                            {statusMeta.label}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4 text-right">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedMutasiId(item.id);
+                            }}
+                            className="px-3 py-1.5 text-[11px] font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-100 transition cursor-pointer"
+                          >
+                            Detail
+                          </button>
+                          {isReviewable && (
+                            <span className="ml-2 text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-100 px-2 py-1 rounded-lg">
+                              Perlu tindak lanjut
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="p-10 text-center text-slate-400 text-xs rounded-xl border border-dashed border-slate-200 bg-slate-50/50">
+              {searchTerm || filterStatus !== "Semua"
+                ? "Tidak ada data yang cocok dengan pencarian / filter."
+                : `Belum ada pengajuan mutasi pada periode tahun ${tahunPeriode}.`}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* POP-UP MODAL DI TENGAH LAYAR */}
-      {selectedDetail && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
-            {/* Modal Header */}
-            <div className="p-5 sm:p-6 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
-              <div className="space-y-1">
-                <span className="text-[10px] font-extrabold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-md border border-indigo-100">
-                  {selectedDetail.jenisPengajuan}
-                </span>
-                <h3 className="text-base font-black text-slate-950">
-                  Rincian Berkas: {selectedDetail.biodata?.nama || "-"}
-                </h3>
-              </div>
-              <button
-                onClick={() => setSelectedDetail(null)}
-                className="w-8 h-8 rounded-full bg-slate-200/70 hover:bg-slate-200 text-slate-600 font-extrabold text-xs flex items-center justify-center cursor-pointer transition"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Modal Scrollable Body */}
-            <div className="p-5 sm:p-6 overflow-y-auto space-y-5 text-xs">
-              {/* SECTION 1: AUDIT LOG PENGAJU (KETUA RT) */}
-              <div className="p-4 bg-indigo-50/70 rounded-2xl border border-indigo-100 space-y-2">
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-900 block">
-                  📌 Informasi Pengaju & Log Laporan RT
-                </span>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-slate-800 font-medium">
-                  <div>
-                    <span className="text-[10px] text-slate-400 block font-normal">
-                      Nama Ketua RT
-                    </span>
-                    <strong className="text-slate-900">
-                      {selectedDetail.pengaju?.namaKetuaRT || "Pengurus RT"}
-                    </strong>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 block font-normal">
-                      Wilayah RT/RW
-                    </span>
-                    <strong className="text-slate-900">
-                      {selectedDetail.pengaju?.wilayahRT || selectedDetail.rt}
-                    </strong>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 block font-normal">
-                      Tanggal & Jam Kirim
-                    </span>
-                    <strong className="text-slate-900 font-mono">
-                      {selectedDetail.pengaju?.tanggalKirim ||
-                        selectedDetail.tanggalLapor}{" "}
-                      • {selectedDetail.pengaju?.jamKirim || "-"}
-                    </strong>
-                  </div>
+      {selectedItem && (
+        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/30 backdrop-blur-sm">
+          <div className="w-full md:w-2xl bg-white h-full shadow-2xl p-6 sm:p-8 flex flex-col justify-between overflow-y-auto animate-in slide-in-from-right duration-300">
+            <div className="space-y-6">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div>
+                  <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-md border border-indigo-100">
+                    DETAIL PENGAJUAN MUTASI RT
+                  </span>
+                  <h3 className="text-base font-extrabold text-slate-950 mt-1">
+                    {selectedItem.nama || "Pengajuan Tanpa Nama"}
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-1 font-mono">
+                    ID: {selectedItem.id}
+                  </p>
                 </div>
-              </div>
-
-              {/* SECTION 2: BIODATA WARGA LENGKAP */}
-              <div className="bg-white p-4 rounded-2xl border border-slate-200/80 space-y-3">
-                <h4 className="font-extrabold text-slate-900 text-xs border-b border-slate-100 pb-2">
-                  👤 Biodata Lengkap Kependudukan Warga
-                </h4>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-slate-800">
-                  <div>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase block">
-                      Nama Lengkap Sesuai KTP
-                    </span>
-                    <span className="font-extrabold text-slate-900 text-sm">
-                      {selectedDetail.biodata?.nama || "-"}
-                    </span>
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase block">
-                      Nomor NIK KTP (16 Digit)
-                    </span>
-                    <span className="font-mono font-extrabold text-slate-900 text-sm">
-                      {selectedDetail.biodata?.nik || "-"}
-                    </span>
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase block">
-                      Tempat, Tanggal Lahir
-                    </span>
-                    <span className="font-bold text-slate-800">
-                      {selectedDetail.biodata?.tempatLahir || "-"},{" "}
-                      {selectedDetail.biodata?.tanggalLahir || "-"}
-                    </span>
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase block">
-                      Jenis Kelamin / Agama
-                    </span>
-                    <span className="font-bold text-slate-800">
-                      {selectedDetail.biodata?.jenisKelamin || "-"} •{" "}
-                      {selectedDetail.biodata?.agama || "-"}
-                    </span>
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase block">
-                      Status Perkawinan & Pekerjaan
-                    </span>
-                    <span className="font-semibold text-slate-800">
-                      {selectedDetail.biodata?.statusPerkawinan || "-"} •{" "}
-                      {selectedDetail.biodata?.pekerjaan || "-"}
-                    </span>
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase block">
-                      Alamat Asal / Domisili
-                    </span>
-                    <span className="font-semibold text-slate-800">
-                      {selectedDetail.biodata?.alamatAsal || "-"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* SECTION 3: KETERANGAN LENGKAP APARATUR */}
-              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-1">
-                <span className="text-[10px] text-slate-400 font-bold uppercase block">
-                  Catatan / Alasan Permohonan RT
-                </span>
-                <p className="text-slate-800 font-medium leading-relaxed">
-                  {selectedDetail.keterangan}
-                </p>
-              </div>
-            </div>
-
-            {/* Modal Footer / Action Buttons */}
-            <div className="p-5 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-3">
-              <span className="text-[11px] text-slate-400 font-mono">
-                ID Ref: {selectedDetail.id}
-              </span>
-
-              {selectedDetail.status === "Menunggu Validasi" ? (
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() =>
-                      handleAksiVerifikasi(selectedDetail.id, "Ditolak")
-                    }
-                    className="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 font-bold text-xs rounded-xl transition cursor-pointer"
-                  >
-                    ✕ Tolak Berkas
-                  </button>
-                  <button
-                    onClick={() =>
-                      handleAksiVerifikasi(selectedDetail.id, "Disetujui")
-                    }
-                    className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-2xs"
-                  >
-                    ✓ Setujui & Simpan Master Data
-                  </button>
-                </div>
-              ) : (
                 <button
-                  onClick={() => setSelectedDetail(null)}
-                  className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl cursor-pointer transition"
+                  type="button"
+                  onClick={() => setSelectedMutasiId(null)}
+                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-black text-sm flex items-center justify-center transition cursor-pointer"
                 >
-                  Tutup Pop-Up
+                  ✕
                 </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-3">
+                  <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
+                    <span className="text-slate-400 font-bold uppercase text-[10px]">
+                      Status Saat Ini
+                    </span>
+                    <span
+                      className={`px-2.5 py-1 rounded-lg border text-[10px] font-bold ${getStatusMeta(selectedItem.status).badge}`}
+                    >
+                      {getStatusMeta(selectedItem.status).label}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
+                    <span className="text-slate-400 font-bold uppercase text-[10px]">
+                      Tanggal Lapor
+                    </span>
+                    <span className="font-mono font-bold text-slate-800">
+                      {formatTanggal(selectedItem.createdAt)}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
+                    <span className="text-slate-400 font-bold uppercase text-[10px]">
+                      Tipe Proses
+                    </span>
+                    <span className="px-2.5 py-1 bg-slate-100 text-slate-800 font-bold rounded-lg border border-slate-200">
+                      {selectedItem.tipeProses}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-400 font-bold uppercase text-[10px]">
+                      Req Method
+                    </span>
+                    <span className="px-2.5 py-1 bg-slate-100 text-slate-800 font-bold rounded-lg border border-slate-200">
+                      {selectedItem.reqMethod || selectedItem.tipeProses}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="bg-white p-4 rounded-2xl border border-slate-200/80 space-y-3">
+                  <h4 className="font-extrabold text-slate-900 text-xs border-b border-slate-100 pb-2">
+                    👤 Data Warga
+                  </h4>
+
+                  <div className="grid grid-cols-1 gap-3">
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold uppercase block">
+                        Nama Lengkap
+                      </span>
+                      <span className="font-bold text-slate-900">
+                        {selectedItem.nama || "-"}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold uppercase block">
+                        NIK
+                      </span>
+                      <span className="font-mono font-bold text-slate-900">
+                        {selectedItem.nik || "-"}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold uppercase block">
+                        Jenis Mutasi
+                      </span>
+                      <span className="font-semibold text-slate-800">
+                        {selectedItem.jenisMutasi}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="sm:col-span-2 bg-white p-4 rounded-2xl border border-slate-200/80 space-y-3">
+                  <h4 className="font-extrabold text-slate-900 text-xs border-b border-slate-100 pb-2">
+                    🧭 Tracking Pengajuan
+                  </h4>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold uppercase block">
+                        Created By
+                      </span>
+                      <span className="font-mono font-bold text-slate-900 break-all">
+                        {selectedItem.createdBy || "-"}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold uppercase block">
+                        Approved By
+                      </span>
+                      <span className="font-mono font-bold text-slate-900 break-all">
+                        {selectedItem.approvedBy || "-"}
+                      </span>
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <span className="text-[10px] text-slate-400 font-bold uppercase block">
+                        Parent
+                      </span>
+                      <span className="font-mono font-bold text-slate-900 break-all">
+                        {selectedItem.parent || "-"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="sm:col-span-2 bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-3">
+                  <h4 className="font-extrabold text-slate-900 text-xs border-b border-slate-100 pb-2">
+                    📝 Catatan Pengajuan
+                  </h4>
+                  <p className="text-slate-700 leading-relaxed text-xs">
+                    {selectedItem.keterangan || "-"}
+                  </p>
+                  {selectedItem.feedbackSekdes && (
+                    <div className="bg-rose-50/70 p-3 rounded-xl border border-rose-200/80 space-y-1">
+                      <span className="text-[10px] text-rose-800 font-extrabold uppercase block">
+                        Feedback Sekdes
+                      </span>
+                      <p className="text-slate-800 font-medium leading-relaxed text-xs">
+                        {selectedItem.feedbackSekdes}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {canReview && (
+                <div className="space-y-3 pt-1">
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                      Feedback Penolakan
+                    </label>
+                    <textarea
+                      value={feedbackDraft}
+                      onChange={(e) => setFeedbackDraft(e.target.value)}
+                      placeholder="Tuliskan alasan penolakan atau catatan perbaikan yang harus dipenuhi RT..."
+                      className="w-full min-h-28 px-3 py-2.5 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 bg-white focus:outline-none focus:border-indigo-600"
+                    />
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <button
+                      type="button"
+                      onClick={() => approveItem(selectedItem)}
+                      className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold rounded-xl transition shadow-sm shadow-emerald-600/20 cursor-pointer"
+                    >
+                      ✓ Setujui
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => rejectItem(selectedItem)}
+                      className="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white text-xs font-bold rounded-xl transition shadow-sm shadow-rose-600/20 cursor-pointer"
+                    >
+                      ✕ Tolak + Simpan Feedback
+                    </button>
+                  </div>
+                </div>
               )}
+
+              {!canReview && (
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-600">
+                  Pengajuan ini sudah selesai diproses. Jika status ditolak dan RT mengirim revisi baru,
+                  record berikutnya akan muncul sebagai pengajuan baru dengan parent yang sama.
+                </div>
+              )}
+            </div>
+
+            <div className="pt-6 border-t border-slate-100 flex items-center justify-between gap-3">
+              <span className="text-xs text-slate-400 font-mono">
+                Tahun Periode: {selectedItem.tahunPeriode}
+              </span>
+              <button
+                type="button"
+                onClick={() => setSelectedMutasiId(null)}
+                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition cursor-pointer"
+              >
+                Tutup Detail
+              </button>
             </div>
           </div>
         </div>
@@ -609,16 +586,18 @@ function ValidasiBerkasRTContent() {
   );
 }
 
-export default function ValidasiBerkasRTPage() {
+export function HalamanValidasiBerkasRTWrapper() {
   return (
     <Suspense
       fallback={
         <div className="p-10 text-center text-xs text-slate-400">
-          Memuat Validasi Berkas...
+          Memuat Validasi Berkas RT...
         </div>
       }
     >
-      <ValidasiBerkasRTContent />
+      <HalamanValidasiBerkasRT />
     </Suspense>
   );
 }
+
+export default HalamanValidasiBerkasRTWrapper;
