@@ -530,7 +530,7 @@ export default function PublicLandingPage() {
               </div>
 
               <a
-                href="https://wa.me/6281234567890?text=Halo%20Admin%20Desa%20Suka%20Makmur,%20saya%20ingin%20bertanya%20mengenai%20layanan%20administrasi."
+                href="https://wa.me/6285238795985?text=Halo%20Admin%20Desa%20Suka%20Makmur,%20saya%20ingin%20bertanya%20mengenai%20layanan%20administrasi."
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold rounded-xl transition flex items-center justify-center gap-2 shadow-xs"
