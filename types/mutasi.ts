@@ -43,18 +43,17 @@ export interface MutasiLog {
 
 export interface MutasiSubmitPayload {
   nik: string;
-  nama: string;
-  tempatLahir: string;
-  tanggalLahir: string;
-  jenisKelamin: string;
-  agama: string;
-  // keluargaId: string;
-  // clusterdesaId: string;
+  nama: string | null;
+  tempatLahir: string | null;
+  tanggalLahir: string | null;
+  jenisKelamin: string | null;
+  agama: string | null;
   jenisMutasi: JenisMutasi;
-  keterangan?: string;
+  keterangan: string | null;
   tipeProses: TipeProses;
-  reqMethod?: ReqMethod; // 'OFFLINE' (RT input) | 'ONLINE' (Warga input)
-  tahunPeriode?: string;
+  reqMethod: ReqMethod; // 'OFFLINE' (RT input) | 'ONLINE' (Warga input)
+  tahunPeriode: string;
+  createdBy: string;
 }
 
 export interface MutasiVerifyPayload {

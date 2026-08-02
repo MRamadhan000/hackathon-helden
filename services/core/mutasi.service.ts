@@ -56,7 +56,12 @@ export async function getMutasiList(tahun?: string): Promise<MutasiPengajuan[]> 
     .order("created_at", { ascending: false });
 
   if (tahun) {
-    query = query.eq("tahun_periode", tahun);
+    const tahunAngka = Number(tahun);
+    if (!Number.isNaN(tahunAngka)) {
+      const startDate = new Date(Date.UTC(tahunAngka, 0, 1)).toISOString();
+      const endDate = new Date(Date.UTC(tahunAngka + 1, 0, 1)).toISOString();
+      query = query.gte("created_at", startDate).lt("created_at", endDate);
+    }
   }
 
   const { data, error } = await query;
@@ -88,25 +93,24 @@ export async function submitMutasi(
   const logId = crypto.randomUUID();
   const statusAwal = "PENDING";
   const actionType = payload.tipeProses === "OFFLINE" ? "SUBMIT_OFFLINE" : "SUBMIT_ONLINE";
+  const isDetailMutasi = payload.jenisMutasi === "Warga Baru" || payload.jenisMutasi === "Koreksi Data";
 
   // A. Insert ke tabel pengajuan mutasi
   const dbPayload = {
     id: mutasiId,
     nik: payload.nik,
-    nama: payload.nama,
-    tempat_lahir: payload.tempatLahir,
-    tanggal_lahir: payload.tanggalLahir,
-    jenis_kelamin: payload.jenisKelamin,
-    agama: payload.agama,
-    // keluarga_id: payload.keluargaId,
-    // clusterdesa_id: payload.clusterdesaId,
+    nama: isDetailMutasi ? payload.nama : null,
+    tempat_lahir: isDetailMutasi ? payload.tempatLahir : null,
+    tanggal_lahir: isDetailMutasi ? payload.tanggalLahir : null,
+    jenis_kelamin: isDetailMutasi ? payload.jenisKelamin : null,
+    agama: isDetailMutasi ? payload.agama : null,
     jenis_mutasi: payload.jenisMutasi,
-    keterangan: payload.keterangan || null,
+    keterangan: payload.keterangan,
     tipe_proses: payload.tipeProses,
-    req_method: payload.reqMethod || payload.tipeProses || "OFFLINE",
+    req_method: payload.reqMethod,
     status: statusAwal,
-    tahun_periode: payload.tahunPeriode || "2026",
-    created_by: actorId,
+    tahun_periode: payload.tahunPeriode,
+    created_by: payload.createdBy || actorId,
   };
 
   const { data, error } = await supabase

@@ -30,6 +30,7 @@ function KelayakanContent() {
       id: p.id,
       nik: p.nik,
       nama: p.nama,
+      clusterdesaId: p.clusterdesaId,
       jenisKelamin: (p.jenisKelamin === "P" ? "P" : "L") as "L" | "P",
       tempatLahir: p.tempat_lahir,
       tanggalLahir: p.tanggal_lahir,
@@ -77,10 +78,18 @@ function KelayakanContent() {
   const handleSurveiSubmit = async (e: React.FormEvent, dataHasil: any) => {
     e.preventDefault();
     try {
+      const nik = (dataHasil?.nik || selectedNik || "").trim();
+      const wargaReferensi = daftarWarga.find((item) => item.nik === nik);
+      const pendudukId = wargaReferensi?.id;
+
+      if (!pendudukId) {
+        throw new Error("Penduduk tidak ditemukan berdasarkan NIK yang dipilih.");
+      }
+
       await submitSurveiHook(
         {
-          pendudukId: dataHasil?.pendudukId || "00000000-0000-0000-0000-000000000000",
-          nik: dataHasil?.nik || selectedNik || "3507000000000001",
+          pendudukId,
+          nik,
           nama: dataHasil?.nama || "Warga Survei",
           skor: Number(dataHasil?.skor) || 50,
           kategori: (dataHasil?.kategori as any) || "Cukup Layak",
@@ -173,7 +182,7 @@ function KelayakanContent() {
             <select
               value={filterKategori}
               onChange={(e) => setFilterKategori(e.target.value)}
-              className="w-full sm:w-auto px-4 py-2.5 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:border-emerald-500 sm:min-w-[200px]"
+              className="w-full sm:w-auto px-4 py-2.5 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:border-emerald-500 sm:min-w-50"
             >
               {FILTER_KATEGORI.map((k) => (
                 <option key={k} value={k}>
@@ -268,7 +277,7 @@ function KelayakanContent() {
                               NIK: {item.nik}
                             </p>
                           </td>
-                          <td className="px-5 py-3.5 text-xs text-slate-600 max-w-[200px]">
+                          <td className="px-5 py-3.5 text-xs text-slate-600 max-w-50">
                             {item.indikator}
                           </td>
                           <td className="px-5 py-3.5">
