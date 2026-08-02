@@ -108,7 +108,7 @@ export default function FormSurveiKelayakan({
         </div>
 
         <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
-          <table className="w-full text-left text-sm border-collapse min-w-[640px]">
+          <table className="w-full text-left text-sm border-collapse min-w-160">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200/80 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
                 <th className="px-4 sm:px-5 py-3">Tgl Survei</th>
@@ -133,7 +133,7 @@ export default function FormSurveiKelayakan({
                         {item.nik}
                       </p>
                     </td>
-                    <td className="px-4 sm:px-5 py-3.5 text-xs text-slate-600 max-w-[180px]">
+                    <td className="px-4 sm:px-5 py-3.5 text-xs text-slate-600 max-w-45">
                       {item.indikator}
                     </td>
                     <td className="px-4 sm:px-5 py-3.5">

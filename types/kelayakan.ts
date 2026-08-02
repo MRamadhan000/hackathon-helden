@@ -18,6 +18,7 @@ export interface SurveiKelayakan {
   indikatorDetail: string;
   jenisDinding?: string | null;
   jenisLantai?: string | null;
+  sumberAir?: string | null;
   sanitasi?: string | null;
   penghasilanBulanan?: number | null;
   adaLansia: boolean;
@@ -52,6 +53,7 @@ export interface SurveiKelayakanPayload {
   indikatorDetail: string;
   jenisDinding?: string;
   jenisLantai?: string;
+  sumberAir?: string;
   sanitasi?: string;
   penghasilanBulanan?: number;
   adaLansia?: boolean;
