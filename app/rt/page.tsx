@@ -80,6 +80,14 @@ function DashboardRTContent() {
     },
   ];
 
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        Loading...
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950 font-sans antialiased">
       {/* HEADER UTAMA PANEL RT */}
@@ -90,7 +98,7 @@ function DashboardRTContent() {
         <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <h2 className="text-lg sm:text-xl font-extrabold text-slate-950">
-              Selamat Datang di Panel Kerja {currentUser?.rtNumber} 👋
+              Selamat Datang di Panel Kerja RT {currentUser?.rtNumber} 👋
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 max-w-2xl">
               Silahkan pilih salah satu kartu fitur di bawah ini untuk mengelola
