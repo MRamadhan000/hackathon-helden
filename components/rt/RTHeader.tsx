@@ -20,7 +20,7 @@ export default function RTHeader({
       localStorage.removeItem("user_session");
       sessionStorage.clear();
     }
-    router.push("/login");
+    router.push("/auth/login/rt");
   };
 
   return (

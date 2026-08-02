@@ -199,7 +199,7 @@ export default function PublicLandingPage() {
               Cek Bansos
             </a>
             <Link
-              href="/login"
+              href="/auth/login"
               className="px-4 py-2 bg-blue-900 hover:bg-blue-800 text-white font-bold rounded-xl transition shadow-xs whitespace-nowrap ml-2"
             >
               Login Pegawai →
@@ -249,47 +249,16 @@ export default function PublicLandingPage() {
                 Layanan Mandiri Warga
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Masukkan 16 digit NIK KTP Anda untuk mulai mengecek data.
+                Login sebagai warga untuk mengakses data dan layanan desa.
               </p>
             </div>
 
-            <form onSubmit={handleCekNikWarga} className="space-y-4">
-              {errorNotif && (
-                <div className="p-3 bg-rose-50 border border-rose-200 text-rose-900 rounded-xl text-xs font-bold">
-                  ⚠️ {errorNotif}
-                </div>
-              )}
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">
-                  NOMOR NIK KTP
-                </label>
-                <input
-                  type="text"
-                  maxLength={16}
-                  placeholder="Contoh: 3507011234560001"
-                  value={nikInput}
-                  onChange={(e) =>
-                    setNikInput(e.target.value.replace(/[^0-9]/g, ""))
-                  }
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 transition"
-                />
-                <span className="text-[10px] text-slate-400 font-medium block text-right">
-                  {nikInput.length}/16 Digit
-                </span>
-              </div>
-
-              <button
-                type="submit"
-                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl transition cursor-pointer flex items-center justify-center gap-2 shadow-xs"
-              >
-                <span>Cek Status Sekarang →</span>
-              </button>
-            </form>
-
-            <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 text-[11px] text-slate-600 font-medium text-center">
-              Aman, cepat, dan transparan untuk seluruh warga.
-            </div>
+            <Link
+              href="/auth/login/warga"
+              className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl transition cursor-pointer flex items-center justify-center gap-2 shadow-xs"
+            >
+              Login sebagai Warga →
+            </Link>
           </div>
         </section>
 

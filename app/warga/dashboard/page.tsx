@@ -1,73 +1,54 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useAuth } from "@/hooks/useAuth";
+import { getWargaDashboardData } from "@/services/core/warga.service";
 
-// Mock Data Spesifik Warga yang Sedang Login
-const mockWargaLogin = {
-  nama: "Agus Salim",
-  nik: "3507011204800003",
-  noKk: "3507010101180022",
-  rtRw: "RT 01 / RW 01",
-  dusun: "Dusun Krajan",
-  tempatTanggalLahir: "Kab. Malang, 12 April 1980",
-  jenisKelamin: "Laki-Laki",
-  pekerjaan: "Buruh Harian Lepas",
-  statusKependudukan: "Penduduk Tetap (Dukcapil Valid)",
-
-  // Status Kelayakan Bansos
-  statusBansos: {
-    isPenerima: true,
-    jenisBantuan: "BLT Dana Desa (BLT-DD)",
-    nominalPerBulan: "Rp 300.000 / Bulan",
-    dasarHukumSk: "SK/DSO/2026/003 (Tahap II)",
-    statusPenyaluran: "Aktif Penerima",
-  },
-
-  // Kondisi Rumah Terdata Saat Ini
-  kondisiRumahEksisting: {
-    atap: "Seng / Genteng Tanah (Cukup)",
-    dinding: "Batu Bata / Semi Tembok",
-    lantai: "Semen Plastik / Aci",
-    sanitasi: "Milik Sendiri (Jamban Sehat)",
-    sumberAir: "Sumur / PAM Desa",
-  },
-
-  // Log Monitoring Pengajuan Sanggahan & Perbaikan Warga
-  logPengajuan: [
-    {
-      id: "log-w-01",
-      tanggalJam: "28/07/2026 • 14:30 WIB",
-      jenisInputan: "Sanggahan Kondisi Rumah",
-      kategori: "Kondisi Rumah",
-      status: "Pending",
-      catatanRt: "Dalam antrean tinjauan Ketua RT 01",
-      detailPerbandingan: {
-        itemDiubah: "Kondisi Atap & Dinding",
-        dataLama: "Atap Genteng Baik, Dinding Tembok Aci",
-        dataBaru: "Atap Bocor Parah (Kayu Lapuk), Dinding Retak Struktur",
-        alasan: "Atap rumah rusak berat akibat angin kencang bulan lalu.",
-      },
-    },
-    {
-      id: "log-w-02",
-      tanggalJam: "10/05/2026 • 09:15 WIB",
-      jenisInputan: "Perbaikan Data Diri",
-      kategori: "Data Kependudukan",
-      status: "Diterima",
-      catatanRt: "Data telah disesuaikan dengan e-KTP terbaru",
-      detailPerbandingan: {
-        itemDiubah: "Ejaan Nama Lengkap & Pekerjaan",
-        dataLama: "Agus Salimm / Petani",
-        dataBaru: "Agus Salim / Buruh Harian Lepas",
-        alasan: "Koreksi ejaan nama sesuai e-KTP dan pembaruan profesi.",
-      },
-    },
-  ],
-};
+// Mock data removed
 
 export default function DashboardWarga() {
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const nikQuery = user?.nik;
+  
   const [selectedLogDetail, setSelectedLogDetail] = useState<any | null>(null);
+  const [wargaData, setWargaData] = useState<any | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState("");
+
+  useEffect(() => {
+    if (nikQuery) {
+      getWargaDashboardData(nikQuery)
+        .then((data) => {
+          setWargaData(data);
+          setIsLoading(false);
+        })
+        .catch((err) => {
+          console.error(err);
+          setErrorMsg(err.message || "Terjadi kesalahan.");
+          setIsLoading(false);
+        });
+    } else {
+      setErrorMsg("NIK tidak valid atau tidak ditemukan.");
+      setIsLoading(false);
+    }
+  }, [nikQuery]);
+
+  if (isLoading || isAuthLoading) {
+    return <div className="min-h-screen flex items-center justify-center bg-slate-50">Memuat Data...</div>;
+  }
+
+  if (errorMsg || !wargaData) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6">
+        <h2 className="text-xl font-bold text-rose-600 mb-2">Gagal Memuat Data</h2>
+        <p className="text-slate-600 mb-4">{errorMsg || "Data warga tidak ditemukan."}</p>
+        <Link href="/" className="px-4 py-2 bg-blue-600 text-white rounded-xl font-bold">Kembali ke Halaman Utama</Link>
+      </div>
+    );
+  }
+
+  const dataToDisplay = wargaData;
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950 font-sans antialiased pb-12">
@@ -89,7 +70,7 @@ export default function DashboardWarga() {
           </div>
 
           <Link
-            href="/login"
+            href="/auth/login/warga"
             className="px-3.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold rounded-xl transition"
           >
             🚪 Keluar
@@ -105,7 +86,7 @@ export default function DashboardWarga() {
               👋 Sugeng Rawuh / Selamat Datang
             </span>
             <h2 className="text-lg sm:text-xl font-extrabold text-slate-950">
-              Halo, {mockWargaLogin.nama}!
+              Halo, {dataToDisplay.nama}!
             </h2>
             <p className="text-xs text-slate-500 max-w-xl leading-relaxed">
               Pantau data profil pribadi, status penerimaan bansos, serta ajukan
@@ -118,10 +99,10 @@ export default function DashboardWarga() {
               Identitas Wilayah RT
             </span>
             <p className="text-xs font-extrabold text-slate-900">
-              {mockWargaLogin.rtRw} • {mockWargaLogin.dusun}
+              {dataToDisplay.rtRw} • {dataToDisplay.dusun}
             </p>
             <span className="text-[10px] font-mono text-slate-500 block">
-              NIK: {mockWargaLogin.nik}
+              NIK: {dataToDisplay.nik}
             </span>
           </div>
         </div>
@@ -140,7 +121,7 @@ export default function DashboardWarga() {
             </span>
           </div>
 
-          {mockWargaLogin.statusBansos.isPenerima ? (
+          {dataToDisplay.statusBansos?.isPenerima ? (
             <div className="p-4 bg-emerald-50/60 border border-emerald-200/80 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="space-y-1">
                 <span className="text-[10px] font-bold text-emerald-800 uppercase block">
@@ -151,10 +132,10 @@ export default function DashboardWarga() {
                 </h4>
                 <p className="text-xs text-slate-600">
                   Program:{" "}
-                  <strong>{mockWargaLogin.statusBansos.jenisBantuan}</strong> •
+                  <strong>{dataToDisplay.statusBansos?.jenisBantuan}</strong> •
                   Dasar Hukum:{" "}
                   <strong className="font-mono">
-                    {mockWargaLogin.statusBansos.dasarHukumSk}
+                    {dataToDisplay.statusBansos?.dasarHukumSk}
                   </strong>
                 </p>
               </div>
@@ -164,7 +145,7 @@ export default function DashboardWarga() {
                   Nominal Bantuan
                 </span>
                 <span className="text-sm font-black text-emerald-900 font-mono">
-                  {mockWargaLogin.statusBansos.nominalPerBulan}
+                  {dataToDisplay.statusBansos?.nominalPerBulan}
                 </span>
               </div>
             </div>
@@ -199,7 +180,7 @@ export default function DashboardWarga() {
                   Nama Lengkap
                 </span>
                 <p className="font-bold text-slate-900">
-                  {mockWargaLogin.nama}
+                  {dataToDisplay.nama}
                 </p>
               </div>
 
@@ -208,7 +189,7 @@ export default function DashboardWarga() {
                   Nomor KK
                 </span>
                 <p className="font-mono font-bold text-slate-900">
-                  {mockWargaLogin.noKk}
+                  {dataToDisplay.noKk}
                 </p>
               </div>
 
@@ -217,8 +198,8 @@ export default function DashboardWarga() {
                   TTL & JK
                 </span>
                 <p className="font-medium text-slate-800">
-                  {mockWargaLogin.tempatTanggalLahir} (
-                  {mockWargaLogin.jenisKelamin})
+                  {dataToDisplay.tempatTanggalLahir} (
+                  {dataToDisplay.jenisKelamin})
                 </p>
               </div>
 
@@ -227,7 +208,7 @@ export default function DashboardWarga() {
                   Pekerjaan
                 </span>
                 <p className="font-bold text-slate-900">
-                  {mockWargaLogin.pekerjaan}
+                  {dataToDisplay.pekerjaan}
                 </p>
               </div>
             </div>
@@ -253,7 +234,7 @@ export default function DashboardWarga() {
                   Atap Rumah
                 </span>
                 <p className="font-bold text-slate-900">
-                  {mockWargaLogin.kondisiRumahEksisting.atap}
+                  {dataToDisplay.kondisiRumahEksisting?.atap || "-"}
                 </p>
               </div>
 
@@ -262,7 +243,7 @@ export default function DashboardWarga() {
                   Dinding Rumah
                 </span>
                 <p className="font-bold text-slate-900">
-                  {mockWargaLogin.kondisiRumahEksisting.dinding}
+                  {dataToDisplay.kondisiRumahEksisting?.dinding || "-"}
                 </p>
               </div>
 
@@ -271,7 +252,7 @@ export default function DashboardWarga() {
                   Lantai Rumah
                 </span>
                 <p className="font-bold text-slate-900">
-                  {mockWargaLogin.kondisiRumahEksisting.lantai}
+                  {dataToDisplay.kondisiRumahEksisting?.lantai || "-"}
                 </p>
               </div>
 
@@ -280,7 +261,7 @@ export default function DashboardWarga() {
                   Sanitasi / MCK
                 </span>
                 <p className="font-bold text-slate-900">
-                  {mockWargaLogin.kondisiRumahEksisting.sanitasi}
+                  {dataToDisplay.kondisiRumahEksisting?.sanitasi || "-"}
                 </p>
               </div>
             </div>
@@ -352,7 +333,7 @@ export default function DashboardWarga() {
               </p>
             </div>
             <span className="px-3 py-1.5 bg-slate-50 text-slate-600 text-xs font-bold rounded-xl border border-slate-200 shrink-0">
-              Total Pengajuan: {mockWargaLogin.logPengajuan.length} Berkas
+              Total Pengajuan: {dataToDisplay.logPengajuan?.length || 0} Berkas
             </span>
           </div>
 
@@ -370,8 +351,8 @@ export default function DashboardWarga() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
-                {mockWargaLogin.logPengajuan.length > 0 ? (
-                  mockWargaLogin.logPengajuan.map((log) => (
+                {dataToDisplay.logPengajuan && dataToDisplay.logPengajuan.length > 0 ? (
+                  dataToDisplay.logPengajuan.map((log: any) => (
                     <tr
                       key={log.id}
                       className="hover:bg-slate-50/70 transition"

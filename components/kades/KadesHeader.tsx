@@ -20,7 +20,7 @@ export default function KadesHeader({
       localStorage.removeItem("mock_user_name");
       sessionStorage.clear();
     }
-    router.push("/login");
+    router.push("/auth/login/kades");
   };
 
   return (
