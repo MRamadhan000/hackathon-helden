@@ -6,7 +6,7 @@ CREATE TABLE tweb_penduduk (
     tanggal_lahir DATE NOT NULL,
     jenis_kelamin VARCHAR(20) NOT NULL,
     agama VARCHAR(50) NOT NULL,
-    status_penduduk VARCHAR(50) NOT NULL,
+         VARCHAR(50) NOT NULL,
     status_verifikasi_dukcapil VARCHAR(50) NOT NULL,
     keluarga_id VARCHAR(36) NOT NULL,
     clusterdesa_id VARCHAR(36) NOT NULL,

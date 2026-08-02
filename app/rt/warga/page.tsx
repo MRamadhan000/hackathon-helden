@@ -1,89 +1,43 @@
 "use client";
 
-import React from "react";
+import React, { useMemo, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import TableWarga, { PendudukRT } from "@/components/rt/TableWarga";
+import { usePenduduk } from "@/hooks/cores/usePenduduk";
 
-const mockWargaPerTahun: Record<string, PendudukRT[]> = {
-  "2026": [
-    {
-      id: "uuid-001",
-      nik: "3507011234560001",
-      nama: "Budi Santoso",
-      jenisKelamin: "L",
-      tempatLahir: "Kab. Malang",
-      tanggalLahir: "1985-05-12",
-      statusPenduduk: "Tetap",
-      statusVerifikasiDukcapil: "Terverifikasi",
-      terakhirDiperbarui: "2025-11-10",
-    },
-    {
-      id: "uuid-002",
-      nik: "3507019876540002",
-      nama: "Siti Aminah",
-      jenisKelamin: "P",
-      tempatLahir: "Kota Surabaya",
-      tanggalLahir: "1958-08-24",
-      statusPenduduk: "Tetap",
-      statusVerifikasiDukcapil: "Terverifikasi",
-      terakhirDiperbarui: "2023-04-15",
-    },
-    {
-      id: "uuid-003",
-      nik: "3507015554440003",
-      nama: "Joko Widodo (Alm)",
-      jenisKelamin: "L",
-      tempatLahir: "Kab. Blitar",
-      tanggalLahir: "1945-01-15",
-      statusPenduduk: "Meninggal",
-      statusVerifikasiDukcapil: "Anomali / Unverified",
-      terakhirDiperbarui: "2026-01-20",
-    },
-  ],
-  "2025": [
-    {
-      id: "uuid-001",
-      nik: "3507011234560001",
-      nama: "Budi Santoso",
-      jenisKelamin: "L",
-      tempatLahir: "Kab. Malang",
-      tanggalLahir: "1985-05-12",
-      statusPenduduk: "Tetap",
-      statusVerifikasiDukcapil: "Terverifikasi",
-      terakhirDiperbarui: "2025-02-10",
-    },
-    {
-      id: "uuid-002",
-      nik: "3507019876540002",
-      nama: "Siti Aminah",
-      jenisKelamin: "P",
-      tempatLahir: "Kota Surabaya",
-      tanggalLahir: "1958-08-24",
-      statusPenduduk: "Tetap",
-      statusVerifikasiDukcapil: "Terverifikasi",
-      terakhirDiperbarui: "2023-04-15",
-    },
-  ],
-  "2024": [
-    {
-      id: "uuid-001",
-      nik: "3507011234560001",
-      nama: "Budi Santoso",
-      jenisKelamin: "L",
-      tempatLahir: "Kab. Malang",
-      tanggalLahir: "1985-05-12",
-      statusPenduduk: "Tetap",
-      statusVerifikasiDukcapil: "Terverifikasi",
-      terakhirDiperbarui: "2024-01-11",
-    },
-  ],
-};
-
-export default function HalamanWarga() {
+function WargaContent() {
   const searchParams = useSearchParams();
   const tahunPeriode = searchParams.get("tahun") || "2026";
-  const dataWarga = mockWargaPerTahun[tahunPeriode] || [];
+
+  // Connection ke Supabase Hook (Tanpa mock dummy data!)
+  const { data: realPendudukList, isLoading } = usePenduduk();
+
+  // Map Data Supabase ke Format PendudukRT
+  const dataWarga: PendudukRT[] = useMemo(() => {
+    return (realPendudukList || []).map((p) => ({
+      id: p.id,
+      nik: p.nik,
+      nama: p.nama,
+      clusterdesaId: p.clusterdesaId,
+      jenisKelamin: (p.jenisKelamin === "P" ? "P" : "L") as "L" | "P",
+      tempatLahir: p.tempat_lahir,
+      tanggalLahir: p.tanggal_lahir,
+      statusPenduduk: (["Tetap", "Pindah", "Meninggal"].includes(
+        p.statusPenduduk,
+      )
+        ? p.statusPenduduk
+        : "Tetap") as "Tetap" | "Pindah" | "Meninggal",
+      statusVerifikasiDukcapil: (p.statusVerifikasiDukcapil ===
+      "Anomali / Unverified"
+        ? "Anomali / Unverified"
+        : "Terverifikasi") as "Terverifikasi" | "Anomali / Unverified",
+      terakhirDiperbarui: new Date(p.updated_at).toLocaleString("id-ID", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }),
+    }));
+  }, [realPendudukList]);
 
   return (
     <div className="min-h-screen bg-slate-50 p-6 lg:p-12 space-y-6 font-sans antialiased">
@@ -101,8 +55,28 @@ export default function HalamanWarga() {
           </span>
         </div>
 
-        <TableWarga data={dataWarga} />
+        {isLoading ? (
+          <div className="p-10 text-center text-xs text-slate-400 bg-white rounded-2xl border">
+            Memuat master data warga dari Supabase...
+          </div>
+        ) : (
+          <TableWarga data={dataWarga} />
+        )}
       </div>
     </div>
+  );
+}
+
+export default function HalamanWarga() {
+  return (
+    <Suspense
+      fallback={
+        <div className="p-10 text-center text-xs text-slate-400">
+          Memuat Halaman Warga...
+        </div>
+      }
+    >
+      <WargaContent />
+    </Suspense>
   );
 }

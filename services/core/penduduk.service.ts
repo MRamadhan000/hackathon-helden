@@ -1,6 +1,41 @@
 import { createClient } from "@/utils/supabase/client";
 import { Penduduk, PendudukHistory } from "@/types/penduduk";
 
+function mapPendudukFromDb(row: any): Penduduk {
+  return {
+    id: row.id,
+    nik: row.nik,
+    nama: row.nama,
+    tempat_lahir: row.tempat_lahir,
+    tanggal_lahir: row.tanggal_lahir,
+    agama: row.agama,
+    statusPenduduk: row.status_penduduk,
+    statusVerifikasiDukcapil: row.status_verifikasi_dukcapil,
+    keluargaId: row.keluarga_id,
+    clusterdesaId: row.clusterdesa_id,
+    jenisKelamin: row.jenis_kelamin,
+    updated_at: row.updated_at,
+    created_at: row.created_at,
+  };
+}
+
+function mapPendudukToDb(payload: Partial<Penduduk> | Omit<Penduduk, "id">) {
+  return {
+    nik: payload.nik,
+    nama: payload.nama,
+    tempat_lahir: payload.tempat_lahir,
+    tanggal_lahir: payload.tanggal_lahir,
+    agama: payload.agama,
+    status_penduduk: payload.statusPenduduk,
+    status_verifikasi_dukcapil: payload.statusVerifikasiDukcapil,
+    keluarga_id: payload.keluargaId,
+    clusterdesa_id: payload.clusterdesaId,
+    jenis_kelamin: payload.jenisKelamin,
+    updated_at: payload.updated_at,
+    created_at: payload.created_at,
+  };
+}
+
 export async function getPendudukList(): Promise<Penduduk[]> {
   const supabase = createClient();
 
@@ -8,10 +43,10 @@ export async function getPendudukList(): Promise<Penduduk[]> {
     .from("tweb_penduduk")
     .select("*")
     .order("nama", { ascending: true });
-
+  
   if (error) throw error;
 
-  return data;
+  return (data || []).map(mapPendudukFromDb);
 }
 
 export async function addPenduduk(
@@ -21,13 +56,13 @@ export async function addPenduduk(
 
   const { data, error } = await supabase
     .from("tweb_penduduk")
-    .insert(payload)
+    .insert(mapPendudukToDb(payload))
     .select()
     .single();
 
   if (error) throw error;
 
-  return data;
+  return mapPendudukFromDb(data);
 }
 
 export async function updatePenduduk(
@@ -40,7 +75,7 @@ export async function updatePenduduk(
   // 1. Update data penduduk utama
   const { data, error } = await supabase
     .from("tweb_penduduk")
-    .update(payload)
+    .update(mapPendudukToDb(payload))
     .eq("id", id)
     .select()
     .single();
@@ -60,7 +95,7 @@ export async function updatePenduduk(
 
   if (historyError) throw historyError;
 
-  return data;
+  return mapPendudukFromDb(data);
 }
 
 export async function deletePenduduk(id: string) {
