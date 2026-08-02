@@ -205,7 +205,6 @@ const mockDetailTitikGrafik: Record<
   },
 };
 
-// MOCK DATA EXECUTIVE DENGAN REALISASI ANGGARAN REALISTIS PER PERIODE
 const mockExecutiveData: Record<string, any> = {
   "2026": {
     totalWarga: "3.412",
@@ -543,7 +542,6 @@ function DashboardKadesContent() {
             </p>
           </div>
 
-          {/* STATUS ALUR SISTEM NETRAL & PROFESIONAL */}
           <div className="px-4 py-2 bg-[#f8fafc] border border-slate-200 rounded-xl shrink-0 self-start sm:self-auto text-right">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
               Status Alur Sistem
@@ -554,7 +552,7 @@ function DashboardKadesContent() {
           </div>
         </div>
 
-        {/* BANNER VERIFIKASI (HANYA MUNCUL DI TAHUN AKTIF 2026 DENGAN ANTREAN DRAFT) */}
+        {/* BANNER VERIFIKASI */}
         {isTahunBerjalan && draftList.length > 0 && (
           <div className="p-4 bg-amber-50 border border-amber-200 text-amber-950 rounded-2xl text-xs font-bold flex items-center justify-between shadow-xs animate-in fade-in duration-200">
             <div className="flex items-center gap-2.5">
@@ -614,7 +612,7 @@ function DashboardKadesContent() {
           </div>
         </div>
 
-        {/* 3. PANEL EKSEKUSI PERSETUJUAN DRAFT SK (HANYA DITAMPILKAN PADA TAHUN AKTIF 2026) */}
+        {/* 3. PANEL EKSEKUSI PERSETUJUAN DRAFT SK */}
         {isTahunBerjalan ? (
           <div
             id="seksi-draft-sk"
@@ -690,8 +688,6 @@ function DashboardKadesContent() {
           <div className="p-4 bg-slate-100 border border-slate-200 rounded-2xl text-slate-600 text-xs font-bold flex items-center justify-between">
             <span>
               🔒 Periode Anggaran Tahun {tahunPeriode} telah ditutup & disahkan.
-              Pengajuan draft SK baru hanya dapat diproses pada tahun anggaran
-              berjalan (2026).
             </span>
             <span className="px-2.5 py-1 bg-white border border-slate-200 text-slate-500 rounded-lg text-[10px]">
               Tahun Terkunci
@@ -706,7 +702,7 @@ function DashboardKadesContent() {
           onOpenPdf={(item) => setPdfPreviewData(item)}
         />
 
-        {/* 5. RADAR KETERJANGKAUAN BANSOS PER RT (CARD DAPAT DIKLIK DENGAN TEKS DETAIL) */}
+        {/* 5. RADAR KETERJANGKAUAN BANSOS PER RT */}
         <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200/80 shadow-xs space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
             <div>
@@ -748,7 +744,6 @@ function DashboardKadesContent() {
                     />
                   </div>
 
-                  {/* TEKS DETAIL -> DITAMPILKAN SECARA JELAS KETIKA CARD DILIHAT / DIHOVER */}
                   <div className="flex items-center justify-between pt-1 text-[11px] border-t border-slate-100/80">
                     <span className="text-slate-400 font-semibold text-[10px]">
                       Kapasitas: {rt.kuotaPersen}%
@@ -1133,7 +1128,7 @@ function DashboardKadesContent() {
         </div>
       )}
 
-      {/* MODAL DETAIL SK (APPROVE / REJECT) */}
+      {/* MODAL DETAIL SK / LOG REVIEW */}
       {selectedSkDetail && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
@@ -1263,17 +1258,25 @@ function DashboardKadesContent() {
         </div>
       )}
 
-      {/* MODAL PDF PREVIEW */}
+      {/* MODAL LOG/PDF PREVIEW - DIPERBAIKI SESUAI STATUS (APPROVED vs REJECTED) */}
       {pdfPreviewData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
             <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-extrabold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                  DOKUMEN PDF RESMI (LABEL SIMULASI PERMENDAGRI)
+                <span
+                  className={`text-[10px] font-black px-2.5 py-1 rounded-md border uppercase ${
+                    pdfPreviewData.statusKeputusan === "Approved"
+                      ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                      : "bg-rose-50 text-rose-800 border-rose-200"
+                  }`}
+                >
+                  {pdfPreviewData.statusKeputusan === "Approved"
+                    ? "DOKUMEN PDF RESMI (APPROVED)"
+                    : "DRAFT SK DITOLAK / PERLU REVISI SEKDES"}
                 </span>
                 <h3 className="text-sm font-bold text-slate-900 mt-0.5">
-                  SK Kepala Desa No: {pdfPreviewData.nomorDraft}
+                  Draft SK No: {pdfPreviewData.nomorDraft}
                 </h3>
               </div>
               <button
@@ -1283,87 +1286,206 @@ function DashboardKadesContent() {
                 ✕
               </button>
             </div>
-            <div className="p-6 overflow-y-auto space-y-4 text-xs text-slate-900 leading-relaxed font-serif bg-white">
-              <div className="text-center border-b-2 border-slate-900 pb-3 space-y-0.5 font-sans">
-                <h4 className="font-extrabold text-sm uppercase text-slate-950">
-                  PEMERINTAH KABUPATEN MALANG
-                </h4>
-                <p className="font-bold text-xs uppercase text-slate-800">
-                  KECAMATAN KARANGPLOSO — DESA DIGITAL
-                </p>
-              </div>
-              <div className="text-center space-y-1 font-sans">
-                <h5 className="font-bold text-xs underline uppercase">
-                  KEPUTUSAN KEPALA DESA DIGITAL
-                </h5>
-                <p className="font-mono text-[11px] text-slate-600">
-                  Nomor: {pdfPreviewData.nomorDraft}
-                </p>
-                <p className="font-bold text-xs uppercase text-slate-900 pt-1">
-                  TENTANG {pdfPreviewData.tentang}
-                </p>
-              </div>
-              <div className="space-y-2 text-[11px] font-sans">
-                <p>
-                  <strong>MEMPERHATIKAN:</strong> Hasil musyawarah verifikasi
-                  berjenjang dari Pengurus RT, serta rekomendasi Sekretaris Desa
-                  atas kuesioner kelayakan Prodeskel DDK.
-                </p>
-                <p>
-                  <strong>MEMUTUSKAN:</strong> Menetapkan nama-nama terlampir
-                  sebagai penerima resmi bantuan sosial dialokasikan dari
-                  Siskeudes TA {tahunPeriode}.
-                </p>
-              </div>
-              <div className="pt-2 font-sans border-t border-slate-200">
-                <span className="text-[10px] font-bold text-slate-400 block mb-1">
-                  LAMPIRAN DAFTAR PENERIMA (TOTAL{" "}
-                  {pdfPreviewData.jumlahKpm || pdfPreviewData.daftarKpm?.length}{" "}
-                  KPM):
-                </span>
-                <div className="space-y-1 bg-slate-50 p-3 rounded-xl border border-slate-200">
-                  {pdfPreviewData.daftarKpm?.map((kpm: any, i: number) => (
-                    <div
-                      key={i}
-                      className="flex justify-between text-[10px] border-b border-slate-200/60 pb-1 last:border-0"
-                    >
-                      <span>
-                        {i + 1}. {kpm.nama} ({kpm.rt})
-                      </span>
-                      <span className="font-bold text-emerald-900">
-                        {kpm.nominal}
-                      </span>
+
+            <div className="p-6 overflow-y-auto space-y-4 text-xs text-slate-900 leading-relaxed font-sans bg-white">
+              {/* TAMPILAN JIKA STATUS REJECTED */}
+              {pdfPreviewData.statusKeputusan === "Rejected" ? (
+                <div className="space-y-4">
+                  <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl space-y-1.5">
+                    <div className="flex items-center gap-2 text-rose-900 font-black text-xs">
+                      <span>💬</span>
+                      <span>CATATAN PENOLAKAN DARI KEPALA DESA:</span>
                     </div>
-                  ))}
+                    <p className="text-slate-800 font-bold bg-white p-3 rounded-xl border border-rose-100 italic leading-relaxed">
+                      "
+                      {pdfPreviewData.catatan ||
+                        "Perlu penyesuaian ulang kuota KPM."}
+                      "
+                    </p>
+                    <span className="text-[10px] font-medium text-rose-700 block text-right pt-0.5">
+                      Waktu Keputusan: {pdfPreviewData.waktuKeputusan}
+                    </span>
+                  </div>
+
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase block">
+                      Perihal Pengajuan Sekdes:
+                    </span>
+                    <p className="font-extrabold text-slate-900">
+                      {pdfPreviewData.tentang}
+                    </p>
+                    <p className="text-[11px] text-slate-600">
+                      Pengusul:{" "}
+                      <strong>
+                        {pdfPreviewData.pengusul || "Ibu Siti (Sekdes)"}
+                      </strong>{" "}
+                      • Total Kuota:{" "}
+                      <strong>{pdfPreviewData.jumlahKpm} KPM</strong> •
+                      Anggaran:{" "}
+                      <strong className="text-emerald-800">
+                        {pdfPreviewData.totalNominal}
+                      </strong>
+                    </p>
+                  </div>
+
+                  <div>
+                    <h4 className="font-bold text-slate-900 mb-2">
+                      Lampiran Daftar Calon Penerima Manfaat (KPM) Dalam Draft:
+                    </h4>
+                    <div className="border border-slate-200 rounded-xl overflow-hidden">
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead>
+                          <tr className="bg-slate-50 border-b border-slate-200 text-slate-400 font-bold uppercase text-[10px]">
+                            <th className="p-2.5">No</th>
+                            <th className="p-2.5">Nama KPM / NIK</th>
+                            <th className="p-2.5">Wilayah RT</th>
+                            <th className="p-2.5 text-right">
+                              Alokasi Bantuan
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 font-medium">
+                          {pdfPreviewData.daftarKpm &&
+                          pdfPreviewData.daftarKpm.length > 0 ? (
+                            pdfPreviewData.daftarKpm.map(
+                              (kpm: any, i: number) => (
+                                <tr key={i} className="hover:bg-slate-50">
+                                  <td className="p-2.5 font-bold text-slate-400">
+                                    {i + 1}
+                                  </td>
+                                  <td className="p-2.5">
+                                    <p className="font-bold text-slate-900">
+                                      {kpm.nama}
+                                    </p>
+                                    <p className="font-mono text-[10px] text-slate-400">
+                                      {kpm.nik}
+                                    </p>
+                                  </td>
+                                  <td className="p-2.5 font-bold text-slate-700">
+                                    {kpm.rt}
+                                  </td>
+                                  <td className="p-2.5 text-right font-mono font-bold text-emerald-800">
+                                    {kpm.nominal}
+                                  </td>
+                                </tr>
+                              ),
+                            )
+                          ) : (
+                            <tr>
+                              <td
+                                colSpan={4}
+                                className="p-4 text-center text-slate-400 text-xs"
+                              >
+                                Daftar KPM terlampir dalam draft berkas Sekdes.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="pt-6 font-sans flex justify-end">
-                <div className="text-center space-y-12">
-                  <p className="text-[11px]">
-                    Ditetapkan di Desa Digital,{" "}
-                    {pdfPreviewData.tanggalMasuk ||
-                      pdfPreviewData.waktuKeputusan}
-                    <br />
-                    <strong>KEPALA DESA DIGITAL</strong>
-                  </p>
-                  <p className="font-bold underline text-xs">( BPK. AHMAD )</p>
+              ) : (
+                /* TAMPILAN JIKA STATUS APPROVED (FORMAT SURAT PDF KOP RESMI) */
+                <div className="space-y-4 font-serif">
+                  <div className="text-center border-b-2 border-slate-900 pb-3 space-y-0.5 font-sans">
+                    <h4 className="font-extrabold text-sm uppercase text-slate-950">
+                      PEMERINTAH KABUPATEN MALANG
+                    </h4>
+                    <p className="font-bold text-xs uppercase text-slate-800">
+                      KECAMATAN KARANGPLOSO — DESA DIGITAL
+                    </p>
+                  </div>
+                  <div className="text-center space-y-1 font-sans">
+                    <h5 className="font-bold text-xs underline uppercase">
+                      KEPUTUSAN KEPALA DESA DIGITAL
+                    </h5>
+                    <p className="font-mono text-[11px] text-slate-600">
+                      Nomor: {pdfPreviewData.nomorDraft}
+                    </p>
+                    <p className="font-bold text-xs uppercase text-slate-900 pt-1">
+                      TENTANG {pdfPreviewData.tentang}
+                    </p>
+                  </div>
+                  <div className="space-y-2 text-[11px] font-sans">
+                    <p>
+                      <strong>MEMPERHATIKAN:</strong> Hasil musyawarah
+                      verifikasi berjenjang dari Pengurus RT, serta rekomendasi
+                      Sekretaris Desa atas kuesioner kelayakan Prodeskel DDK.
+                    </p>
+                    <p>
+                      <strong>MEMUTUSKAN:</strong> Menetapkan nama-nama
+                      terlampir sebagai penerima resmi bantuan sosial
+                      dialokasikan dari Siskeudes TA {tahunPeriode}.
+                    </p>
+                  </div>
+                  <div className="pt-2 font-sans border-t border-slate-200">
+                    <span className="text-[10px] font-bold text-slate-400 block mb-1">
+                      LAMPIRAN DAFTAR PENERIMA (TOTAL{" "}
+                      {pdfPreviewData.jumlahKpm ||
+                        pdfPreviewData.daftarKpm?.length}{" "}
+                      KPM):
+                    </span>
+                    <div className="space-y-1 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                      {pdfPreviewData.daftarKpm?.map((kpm: any, i: number) => (
+                        <div
+                          key={i}
+                          className="flex justify-between text-[10px] border-b border-slate-200/60 pb-1 last:border-0"
+                        >
+                          <span>
+                            {i + 1}. {kpm.nama} ({kpm.rt})
+                          </span>
+                          <span className="font-bold text-emerald-900">
+                            {kpm.nominal}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="pt-6 font-sans flex justify-end">
+                    <div className="text-center space-y-12">
+                      <p className="text-[11px]">
+                        Ditetapkan di Desa Digital,{" "}
+                        {pdfPreviewData.tanggalMasuk ||
+                          pdfPreviewData.waktuKeputusan}
+                        <br />
+                        <strong>KEPALA DESA DIGITAL</strong>
+                      </p>
+                      <p className="font-bold underline text-xs">
+                        ( BPK. AHMAD )
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
+
             <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
               <span className="text-[11px] text-slate-400 font-mono">
-                Nominal Total: {pdfPreviewData.totalNominal}
+                {pdfPreviewData.statusKeputusan === "Approved"
+                  ? `Nominal Total: ${pdfPreviewData.totalNominal}`
+                  : "Status: Berkas Ditolak (Menunggu Revisi Sekdes)"}
               </span>
-              <button
-                onClick={() => {
-                  setPdfPreviewData(null);
-                  setShowCetakSuccessModal(true);
-                }}
-                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-2xs cursor-pointer flex items-center gap-1.5"
-              >
-                <span>🖨️</span>
-                <span>Cetak Surat PDF (Ke Siskeudes)</span>
-              </button>
+
+              {pdfPreviewData.statusKeputusan === "Approved" ? (
+                <button
+                  onClick={() => {
+                    setPdfPreviewData(null);
+                    setShowCetakSuccessModal(true);
+                  }}
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl cursor-pointer flex items-center gap-1.5"
+                >
+                  <span>🖨️</span>
+                  <span>Cetak Surat PDF (Ke Siskeudes)</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => setPdfPreviewData(null)}
+                  className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl cursor-pointer"
+                >
+                  Tutup Rincian Revisi
+                </button>
+              )}
             </div>
           </div>
         </div>
